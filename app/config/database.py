@@ -8,7 +8,7 @@ import hashlib
 from pathlib import Path
 
 # Alternar para True se quiser usar o dka_ferramentas.db (MySQL) ou False para app.db (Banco Antigo Local)
-USE_MYSQL_EXPORTED_DB = False
+USE_MYSQL_EXPORTED_DB = True
 
 def get_database_dir() -> Path:
     """
@@ -43,7 +43,10 @@ def get_database_path() -> Path:
         if root_dka_db.exists():
             return root_dka_db
 
-    # Retorna o banco antigo app.db por padrão
+    root_dka_db = db_dir.parent / "dka_ferramentas.db"
+    if root_dka_db.exists():
+        return root_dka_db
+
     return db_dir / "app.db"
 
 def derive_encryption_key() -> str:
