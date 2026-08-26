@@ -1,0 +1,175 @@
+name: Build Multiplataforma (Windows, Linux, macOS)
+
+on:
+  push:
+    branches: [ main, master ]
+    tags: [ 'v*' ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  # ==========================================================
+  # JOB 1: Windows Build (.exe)
+  # ==========================================================
+  build-windows:
+    name: Build Windows (.exe)
+    runs-on: windows-latest
+
+    steps:
+    - name: Checkout do Código
+      uses: actions/checkout@v4
+
+    - name: Configurar Python 3.11
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+        cache: 'pip'
+
+    - name: Instalar Dependências
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt pyinstaller
+
+    - name: Executar Testes Automatizados
+      run: |
+        python -m unittest discover tests
+
+    - name: Compilar com PyInstaller
+      run: |
+        pyinstaller --noconfirm DKA_Alinhamento.spec
+
+    - name: Upload Artefato Windows
+      uses: actions/upload-artifact@v4
+      with:
+        name: DKA_Alinhamento-Windows-x64
+        path: dist/DKA_Alinhamento.exe
+        if-no-files-found: error
+
+  # ==========================================================
+  # JOB 2: Linux Build (Binário Executável / tar.gz)
+  # ==========================================================
+  build-linux:
+    name: Build Linux (x86_64)
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout do Código
+      uses: actions/checkout@v4
+
+    - name: Instalar Dependências do Sistema (Tkinter / X11)
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y python3-tk libtk8.6 libsqlite3-dev
+
+    - name: Configurar Python 3.11
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+        cache: 'pip'
+
+    - name: Instalar Dependências Python
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt pyinstaller
+
+    - name: Executar Testes Automatizados
+      run: |
+        python -m unittest discover tests
+
+    - name: Compilar com PyInstaller
+      run: |
+        pyinstaller --noconfirm DKA_Alinhamento.spec
+
+    - name: Empacotar Artefato Linux
+      run: |
+        chmod +x dist/DKA_Alinhamento
+        tar -czf dist/DKA_Alinhamento-Linux-x64.tar.gz -C dist DKA_Alinhamento
+
+    - name: Upload Artefato Linux
+      uses: actions/upload-artifact@v4
+      with:
+        name: DKA_Alinhamento-Linux-x64
+        path: |
+          dist/DKA_Alinhamento
+          dist/DKA_Alinhamento-Linux-x64.tar.gz
+        if-no-files-found: error
+
+  # ==========================================================
+  # JOB 3: macOS Build (.app / .zip)
+  # ==========================================================
+  build-macos:
+    name: Build macOS
+    runs-on: macos-latest
+
+    steps:
+    - name: Checkout do Código
+      uses: actions/checkout@v4
+
+    - name: Configurar Python 3.11
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+        cache: 'pip'
+
+    - name: Instalar Dependências Python
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt pyinstaller
+
+    - name: Executar Testes Automatizados
+      run: |
+        python -m unittest discover tests
+
+    - name: Compilar com PyInstaller
+      run: |
+        pyinstaller --noconfirm DKA_Alinhamento.spec
+
+    - name: Empacotar Artefato macOS
+      run: |
+        cd dist
+        if [ -d "DKA_Alinhamento.app" ]; then
+          zip -r DKA_Alinhamento-macOS.zip DKA_Alinhamento.app DKA_Alinhamento
+        else
+          zip -r DKA_Alinhamento-macOS.zip DKA_Alinhamento
+        fi
+        cd ..
+
+    - name: Upload Artefato macOS
+      uses: actions/upload-artifact@v4
+      with:
+        name: DKA_Alinhamento-macOS
+        path: dist/DKA_Alinhamento-macOS.zip
+        if-no-files-found: error
+
+  # ==========================================================
+  # JOB 4: Publicar GitHub Release (quando tag v* for criada)
+  # ==========================================================
+  release:
+    name: Publicar Release no GitHub
+    needs: [build-windows, build-linux, build-macos]
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    steps:
+    - name: Download Artefatos
+      uses: actions/download-artifact@v4
+      with:
+        path: artifacts
+
+    - name: Preparar arquivos de Release
+      run: |
+        mkdir -p release_assets
+        cp artifacts/DKA_Alinhamento-Windows-x64/DKA_Alinhamento.exe release_assets/DKA_Alinhamento-Windows-x64.exe || true
+        cp artifacts/DKA_Alinhamento-Linux-x64/DKA_Alinhamento-Linux-x64.tar.gz release_assets/ || true
+        cp artifacts/DKA_Alinhamento-macOS/DKA_Alinhamento-macOS.zip release_assets/ || true
+        ls -la release_assets/
+
+    - name: Criar GitHub Release
+      uses: softprops/action-gh-release@v2
+      with:
+        files: release_assets/*
+        generate_release_notes: true

@@ -1,0 +1,675 @@
+# Arquitetura da Aplicação Desktop
+
+A aplicação deve ser desenvolvida em Python utilizando Tkinter  como camada de interface gráfica.
+
+O projeto deve seguir uma arquitetura modular e organizada, evitando concentrar lógica de negócio, acesso ao banco de dados e construção da interface no mesmo arquivo.
+
+A estrutura deve ser inspirada em arquiteturas utilizadas em aplicações web, porém adaptada para o funcionamento de uma aplicação desktop.
+
+## 1. Estrutura geral
+
+A aplicação deve seguir uma estrutura semelhante a:
+
+```text
+app/
+├── main.py
+│
+├── config/
+│   └── settings.py
+│
+├── core/
+│   ├── router.py
+│   ├── database.py
+│   └── exceptions.py
+│
+├── views/
+│   ├── layouts/
+│   │   └── main_layout.py
+│   │
+│   ├── dashboard/
+│   │   └── index.py
+│   │
+│   └── clientes/
+│       ├── index.py
+│       ├── create.py
+│       ├── edit.py
+│       └── show.py
+│
+├── models/
+│   └── cliente.py
+│
+├── repositories/
+│   └── cliente_repository.py
+│
+├── services/
+│   └── cliente_service.py
+│
+├── components/
+│   ├── buttons.py
+│   ├── inputs.py
+│   ├── tables.py
+│   └── dialogs.py
+│
+├── utils/
+│   ├── validators.py
+│   └── formatters.py
+│
+└── assets/
+    ├── images/
+    └── icons/
+```
+
+A estrutura deve ser modular. Conforme novas funcionalidades forem adicionadas, elas devem possuir seus próprios módulos sem transformar arquivos existentes em arquivos excessivamente grandes.
+
+---
+
+# 2. `main.py`
+
+O arquivo `main.py` deve ser o ponto de entrada da aplicação.
+
+Sua responsabilidade deve ser mínima:
+
+1. Inicializar a aplicação.
+2. Criar a janela principal.
+3. Inicializar configurações necessárias.
+4. Inicializar o banco de dados.
+5. Inicializar o sistema de navegação.
+6. Abrir a primeira tela.
+7. Iniciar o loop principal do Tkinter.
+
+O `main.py` não deve conter regras de negócio, consultas SQL ou construção detalhada das telas.
+
+Conceitualmente:
+
+```text
+main.py
+   ↓
+Inicializa aplicação
+   ↓
+Cria MainWindow
+   ↓
+Inicializa Router
+   ↓
+Abre Dashboard
+```
+
+---
+
+# 3. Views
+
+A pasta `views/` contém as telas da aplicação.
+
+Cada tela deve ser separada em seu próprio arquivo.
+
+Por exemplo, o módulo de clientes deve possuir:
+
+```text
+views/
+└── clientes/
+    ├── index.py
+    ├── create.py
+    ├── edit.py
+    └── show.py
+```
+
+A convenção deve ser:
+
+* `index.py` → listagem.
+* `create.py` → criação.
+* `edit.py` → edição.
+* `show.py` → visualização detalhada.
+
+Isso permite que cada tela tenha responsabilidade limitada.
+
+Por exemplo:
+
+```text
+clientes/index.py
+```
+
+Responsável pela listagem dos clientes, filtros, paginação, botão de criação e ações de edição/visualização.
+
+```text
+clientes/create.py
+```
+
+Responsável exclusivamente pelo formulário de criação.
+
+```text
+clientes/edit.py
+```
+
+Responsável exclusivamente pelo formulário de edição.
+
+```text
+clientes/show.py
+```
+
+Responsável pela visualização dos dados de um cliente.
+
+As Views não devem executar SQL diretamente.
+
+---
+
+# 4. Frames e navegação
+
+A aplicação deve utilizar uma única janela principal do Tkinter sempre que possível.
+
+As telas devem ser implementadas como `Frame`s que podem ser carregados e removidos dentro da área principal da aplicação.
+
+Conceitualmente:
+
+```text
+MainWindow
+│
+└── ContentArea
+    │
+    ├── DashboardFrame
+    ├── ClientesIndexFrame
+    ├── ClienteCreateFrame
+    ├── ClienteEditFrame
+    └── ClienteShowFrame
+```
+
+Quando o usuário navegar para outra tela, o Router deve remover ou ocultar o Frame atual e carregar o novo Frame.
+
+Evitar abrir uma nova janela do sistema operacional para cada página da aplicação.
+
+Janelas secundárias (`Toplevel`) devem ser utilizadas apenas quando fizer sentido, como:
+
+* confirmações;
+* diálogos;
+* seleção de registros;
+* configurações;
+* mensagens especiais;
+* formulários que realmente precisem funcionar como modal.
+
+---
+
+# 5. Router
+
+O arquivo:
+
+```text
+core/router.py
+```
+
+deve ser responsável pela navegação entre telas.
+
+O objetivo é evitar que uma View precise conhecer diretamente como outra View deve ser criada.
+
+A aplicação deve possuir uma API de navegação simples, por exemplo:
+
+```python
+router.navigate("clientes.index")
+```
+
+Para criação:
+
+```python
+router.navigate("clientes.create")
+```
+
+Para edição:
+
+```python
+router.navigate("clientes.edit", cliente_id=10)
+```
+
+Para visualização:
+
+```python
+router.navigate("clientes.show", cliente_id=10)
+```
+
+O Router deve:
+
+1. Identificar a rota.
+2. Localizar a View correspondente.
+3. Remover/desmontar a View atual.
+4. Criar a nova View.
+5. Passar os parâmetros necessários.
+6. Exibir a nova View.
+
+O Router deve funcionar como uma camada de navegação da aplicação desktop.
+
+---
+
+# 6. Models
+
+A pasta `models/` representa as entidades da aplicação.
+
+Exemplo:
+
+```text
+models/
+└── cliente.py
+```
+
+O Model `Cliente` representa os dados de um cliente e pode conter propriedades e comportamentos diretamente relacionados à entidade.
+
+Exemplo conceitual:
+
+```python
+class Cliente:
+    id
+    nome
+    email
+    telefone
+    cpf
+```
+
+O Model não deve ser responsável pela construção da interface gráfica.
+
+---
+
+# 7. Repositories
+
+A pasta `repositories/` deve ser responsável pelo acesso aos dados.
+
+Exemplo:
+
+```text
+repositories/
+└── cliente_repository.py
+```
+
+O Repository encapsula as operações de banco de dados.
+
+Por exemplo:
+
+```python
+cliente_repository.find_all()
+cliente_repository.find_by_id(id)
+cliente_repository.create(data)
+cliente_repository.update(id, data)
+cliente_repository.delete(id)
+```
+
+As Views não devem executar consultas SQL diretamente.
+
+Evitar:
+
+```python
+cursor.execute("SELECT * FROM clientes")
+```
+
+dentro de uma View.
+
+A View deve solicitar os dados ao Service, que por sua vez utiliza o Repository.
+
+---
+
+# 8. Services
+
+A pasta `services/` contém a lógica de negócio.
+
+Exemplo:
+
+```text
+services/
+└── cliente_service.py
+```
+
+O Service deve ficar entre a View e o Repository.
+
+Fluxo:
+
+```text
+VIEW
+ ↓
+SERVICE
+ ↓
+REPOSITORY
+ ↓
+DATABASE
+```
+
+Por exemplo:
+
+```python
+cliente_service.criar_cliente(dados)
+```
+
+O Service pode:
+
+1. Validar regras de negócio.
+2. Normalizar dados.
+3. Verificar duplicidades.
+4. Executar operações necessárias.
+5. Utilizar um ou mais Repositories.
+6. Retornar o resultado para a View.
+
+Exemplo:
+
+```text
+ClienteCreate
+      ↓
+ClienteService.criar()
+      ↓
+ClienteRepository.create()
+      ↓
+SQLite
+```
+
+---
+
+# 9. Components
+
+A pasta `components/` deve conter componentes visuais reutilizáveis.
+
+Exemplos:
+
+```text
+components/
+├── buttons.py
+├── inputs.py
+├── tables.py
+└── dialogs.py
+```
+
+Se várias telas utilizarem o mesmo componente, ele deve ser extraído para essa camada.
+
+Por exemplo, se existir um botão padrão:
+
+```python
+PrimaryButton(...)
+```
+
+ele pode ser utilizado em várias telas.
+
+Isso evita duplicação de código.
+
+---
+
+# 10. Utils
+
+A pasta `utils/` deve conter funções auxiliares que não pertencem especificamente a uma tela ou entidade.
+
+Exemplos:
+
+```text
+utils/
+├── validators.py
+├── formatters.py
+└── helpers.py
+```
+
+Podem existir funções como:
+
+```python
+validate_email()
+format_phone()
+format_currency()
+format_cpf()
+```
+
+Essas funções devem permanecer genéricas.
+
+---
+
+# 11. Fluxo completo de uma tela
+
+Considere a tela de listagem de clientes.
+
+O usuário acessa:
+
+```text
+Clientes
+```
+
+O Router abre:
+
+```text
+views/clientes/index.py
+```
+
+A View solicita os dados:
+
+```text
+ClientesIndex
+      ↓
+ClienteService
+      ↓
+ClienteRepository
+      ↓
+SQLite
+```
+
+O Repository retorna os dados:
+
+```text
+SQLite
+ ↓
+Repository
+ ↓
+Service
+ ↓
+View
+```
+
+A View então renderiza os clientes na tabela.
+
+---
+
+# 12. Fluxo de criação
+
+Quando o usuário clicar em "Novo cliente":
+
+```text
+ClientesIndex
+      ↓
+router.navigate("clientes.create")
+      ↓
+ClienteCreate
+```
+
+Ao clicar em salvar:
+
+```text
+ClienteCreate
+      ↓
+ClienteService.criar()
+      ↓
+ClienteRepository.create()
+      ↓
+SQLite
+```
+
+Depois do sucesso:
+
+```text
+SQLite
+ ↓
+Service
+ ↓
+ClienteCreate
+ ↓
+Router
+ ↓
+ClientesIndex
+```
+
+A listagem deve ser atualizada.
+
+---
+
+# 13. Fluxo de edição
+
+Ao clicar em editar:
+
+```text
+ClientesIndex
+      ↓
+router.navigate(
+    "clientes.edit",
+    cliente_id=10
+)
+```
+
+A tela de edição recebe o ID.
+
+```text
+ClienteEdit
+      ↓
+ClienteService.buscar(10)
+      ↓
+ClienteRepository.find_by_id(10)
+      ↓
+SQLite
+```
+
+Os dados são carregados no formulário.
+
+Ao salvar:
+
+```text
+ClienteEdit
+      ↓
+ClienteService.atualizar()
+      ↓
+ClienteRepository.update()
+      ↓
+SQLite
+```
+
+Após sucesso, retornar para:
+
+```text
+clientes.index
+```
+
+---
+
+# 14. Regra fundamental de separação
+
+A aplicação deve respeitar a seguinte regra:
+
+```text
+View
+→ Interface gráfica
+
+Service
+→ Regras de negócio
+
+Repository
+→ Banco de dados
+
+Model
+→ Entidades
+
+Component
+→ Elementos visuais reutilizáveis
+
+Router
+→ Navegação
+```
+
+Evitar misturar responsabilidades.
+
+Por exemplo, não colocar:
+
+```text
+SQL
+```
+
+dentro de:
+
+```text
+View
+```
+
+Não colocar:
+
+```text
+regra de negócio
+```
+
+dentro de:
+
+```text
+Component
+```
+
+Não colocar:
+
+```text
+código de interface
+```
+
+dentro de:
+
+```text
+Repository
+```
+
+---
+
+# 15. Princípio de crescimento
+
+A arquitetura deve permitir que novos módulos sejam adicionados sem modificar excessivamente os módulos existentes.
+
+Por exemplo, inicialmente:
+
+```text
+clientes/
+```
+
+Posteriormente:
+
+```text
+clientes/
+produtos/
+vendas/
+fornecedores/
+usuarios/
+relatorios/
+configuracoes/
+```
+
+Cada módulo deve possuir suas próprias Views e, quando necessário, seus próprios Services, Repositories e Models.
+
+Exemplo:
+
+```text
+views/
+├── clientes/
+├── produtos/
+├── vendas/
+├── fornecedores/
+└── usuarios/
+```
+
+A aplicação deve evitar criar arquivos gigantes contendo várias telas ou funcionalidades diferentes.
+
+---
+
+# 16. Objetivo da arquitetura
+
+O objetivo principal é fazer com que a aplicação Tkinter tenha uma organização semelhante à de uma aplicação web moderna, mesmo sendo uma aplicação desktop.
+
+A interface deve ser apenas uma camada da aplicação.
+
+A regra de negócio deve ser independente da interface sempre que possível.
+
+O acesso ao banco deve ser isolado.
+
+A navegação deve ser centralizada.
+
+Os componentes visuais reutilizáveis devem ser compartilhados.
+
+O resultado esperado é uma aplicação que possa crescer de algumas telas para dezenas de telas sem transformar o projeto em um conjunto de arquivos difíceis de manter.
+
+A prioridade deve ser:
+
+```text
+Organização
+↓
+Separação de responsabilidades
+↓
+Reutilização
+↓
+Manutenibilidade
+↓
+Escalabilidade
+```
