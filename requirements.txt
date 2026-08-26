@@ -1,4 +1,4 @@
 # Dependências do Projeto Sistema de Alinhamento - Oficina Desktop
-sqlcipher3-binary>=0.6.0
+sqlcipher3-binary>=0.6.0; sys_platform == 'linux'
 sqlalchemy>=2.0.0
 reportlab>=4.0.0
