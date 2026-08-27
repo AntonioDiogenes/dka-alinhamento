@@ -1,7 +1,7 @@
 {
-  "version": "1.0.1",
-  "release_notes": "- Nova Tela de Splash de carregamento 'Buscando Atualizações'\n- Checagem automática e barra de progresso durante o download\n- Execução do aplicativo em segundo plano ao fechar no (X)",
-  "download_url_win": "https://github.com/AntonioDiogenes/dka-alinhamento/releases/download/v1.0.1/DKA_Alinhamento-Windows-x64.exe",
-  "download_url_linux": "https://github.com/AntonioDiogenes/dka-alinhamento/releases/download/v1.0.1/DKA_Alinhamento-Linux-x64.tar.gz",
-  "download_url_mac": "https://github.com/AntonioDiogenes/dka-alinhamento/releases/download/v1.0.1/DKA_Alinhamento-macOS.zip"
+  "version": "1.0.2",
+  "release_notes": "🚀 Versão 1.0.2: Teste de Atualização Automática Transparente com Barra de Progresso e Auto-Restart.",
+  "download_url_win": "https://github.com/AntonioDiogenes/dka-alinhamento/releases/download/v1.0.2/DKA_Alinhamento-Windows-x64.exe",
+  "download_url_linux": "https://github.com/AntonioDiogenes/dka-alinhamento/releases/download/v1.0.2/DKA_Alinhamento-Linux-x64.tar.gz",
+  "download_url_mac": "https://github.com/AntonioDiogenes/dka-alinhamento/releases/download/v1.0.2/DKA_Alinhamento-macOS.zip"
 }
