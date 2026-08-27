@@ -368,7 +368,15 @@ class UpdateService:
             if not download_url:
                 raise ValueError("URL de download inválida ou vazia.")
 
-            target_filename = "DKA_Alinhamento_novo.exe" if sys.platform.startswith("win") else "DKA_Alinhamento_novo"
+            if sys.platform.startswith("win"):
+                target_filename = "DKA_Alinhamento_novo.exe"
+            elif download_url.endswith(".tar.gz"):
+                target_filename = "DKA_Alinhamento_novo.tar.gz"
+            elif download_url.endswith(".zip"):
+                target_filename = "DKA_Alinhamento_novo.zip"
+            else:
+                target_filename = "DKA_Alinhamento_novo"
+
             download_dir = Path(sys.executable).parent if getattr(sys, 'frozen', False) else Path(__file__).resolve().parent.parent.parent
             destination_path = download_dir / target_filename
 
@@ -448,10 +456,18 @@ del "%~f0"
             sh_script = exe_dir / "updater.sh"
             sh_content = f"""#!/bin/bash
 sleep 2
-rm -f "{current_exe_name}"
-mv "{new_file_name}" "{current_exe_name}"
-chmod +x "{current_exe_name}"
-"./{current_exe_name}" &
+if [[ "{new_file_name}" == *.tar.gz ]]; then
+    tar -xzf "{new_file_name}" -C "{exe_dir}"
+    rm -f "{new_file_name}"
+elif [[ "{new_file_name}" == *.zip ]]; then
+    unzip -o "{new_file_name}" -d "{exe_dir}"
+    rm -f "{new_file_name}"
+else
+    rm -f "{current_exe_name}"
+    mv "{new_file_name}" "{current_exe_name}"
+fi
+chmod +x "{exe_dir}/{current_exe_name}"
+"{exe_dir}/{current_exe_name}" &
 rm -- "$0"
 """
             with open(sh_script, "w") as f:
