@@ -62,24 +62,25 @@ def main():
     root = tk.Tk()
     root.title("Sistema de Alinhamento - Oficina Desktop")
     root.configure(bg=COLORS["bg_dark"])
+    root.withdraw()  # Esconde a janela principal durante o Splash Screen
 
-    # Tratamento de encerramento correto do programa
-    def on_closing():
-        close_connection()
-        root.destroy()
+    from app.services.update_service import UpdateService, SystemTrayManager
 
-    root.protocol("WM_DELETE_WINDOW", on_closing)
+    # Configuração de segundo plano ao fechar (X)
+    tray_manager = SystemTrayManager(root, on_quit_callback=close_connection)
+    tray_manager.setup()
 
     # Sempre abrir em tela cheia / maximizado
-    try:
-        root.attributes("-zoomed", True)
-    except Exception:
+    def apply_window_geometry():
         try:
-            root.state("zoomed")
+            root.attributes("-zoomed", True)
         except Exception:
-            sw = root.winfo_screenwidth()
-            sh = root.winfo_screenheight()
-            root.geometry(f"{sw}x{sh}+0+0")
+            try:
+                root.state("zoomed")
+            except Exception:
+                sw = root.winfo_screenwidth()
+                sh = root.winfo_screenheight()
+                root.geometry(f"{sw}x{sh}+0+0")
 
     root.minsize(1024, 600)
 
@@ -119,15 +120,14 @@ def main():
     router.register("alinhamento.trucks.finalizar", lambda parent, r, kwargs: TrucksFinalizarView(parent, r, kwargs))
     router.register("alinhamento.trucks.preview", lambda parent, r, kwargs: TrucksPreviewView(parent, r, kwargs))
 
-    # Abrir a primeira tela (Dashboard)
-    router.navigate("dashboard")
+    def on_app_ready():
+        """Chamado assim que o Splash Screen termina a checagem de atualizações."""
+        router.navigate("dashboard")
+        root.deiconify()
+        apply_window_geometry()
 
-    # Verificação assíncrona de atualizações automáticas em segundo plano
-    try:
-        from app.services.update_service import UpdateService
-        UpdateService.check_for_updates_async(root)
-    except Exception:
-        pass
+    # Iniciar Tela de Splash (Buscando Atualizações...)
+    UpdateService.show_splash_and_check(root, on_app_ready_callback=on_app_ready)
 
     # Iniciar Loop Principal
     root.mainloop()
