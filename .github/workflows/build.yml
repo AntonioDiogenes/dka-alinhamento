@@ -170,6 +170,6 @@ jobs:
     - name: Publicar/Anexar Arquivos na Release
       uses: softprops/action-gh-release@v2
       with:
-        tag_name: v1.0.2
+        tag_name: v1.0.3
         files: release_assets/*
         generate_release_notes: true

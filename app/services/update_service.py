@@ -204,7 +204,11 @@ class UpdateService:
         dialog = tk.Toplevel(self.root)
         dialog.title("🚀 Atualização Disponível")
         dialog.configure(bg=COLORS["bg_dark"])
-        dialog.transient(self.root)
+        if self.root.state() != "withdrawn":
+            dialog.transient(self.root)
+        dialog.attributes("-topmost", True)
+        dialog.lift()
+        dialog.focus_force()
         dialog.grab_set()
 
         w, h = 500, 360
@@ -298,7 +302,11 @@ class UpdateService:
         self.download_window = tk.Toplevel(self.root)
         self.download_window.title("Baixando Atualização...")
         self.download_window.configure(bg=COLORS["bg_dark"])
-        self.download_window.transient(self.root)
+        if self.root.state() != "withdrawn":
+            self.download_window.transient(self.root)
+        self.download_window.attributes("-topmost", True)
+        self.download_window.lift()
+        self.download_window.focus_force()
         self.download_window.grab_set()
 
         w, h = 480, 200
