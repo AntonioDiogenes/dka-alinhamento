@@ -1,7 +1,7 @@
 {
-  "version": "1.0.4",
-  "release_notes": "🚀 Versão 1.0.4: Suporte completo à descompactação de pacotes tar.gz no Linux e zip no macOS durante a atualização.",
-  "download_url_win": "https://github.com/AntonioDiogenes/dka-alinhamento/releases/download/v1.0.4/DKA_Alinhamento-Windows-x64.exe",
-  "download_url_linux": "https://github.com/AntonioDiogenes/dka-alinhamento/releases/download/v1.0.4/DKA_Alinhamento-Linux-x64.tar.gz",
-  "download_url_mac": "https://github.com/AntonioDiogenes/dka-alinhamento/releases/download/v1.0.4/DKA_Alinhamento-macOS.zip"
+  "version": "1.0.5",
+  "release_notes": "🚀 Versão 1.0.5: Teste ao vivo da Atualização Automática Transparente com Barra de Progresso!",
+  "download_url_win": "https://github.com/AntonioDiogenes/dka-alinhamento/releases/download/v1.0.5/DKA_Alinhamento-Windows-x64.exe",
+  "download_url_linux": "https://github.com/AntonioDiogenes/dka-alinhamento/releases/download/v1.0.5/DKA_Alinhamento-Linux-x64.tar.gz",
+  "download_url_mac": "https://github.com/AntonioDiogenes/dka-alinhamento/releases/download/v1.0.5/DKA_Alinhamento-macOS.zip"
 }
