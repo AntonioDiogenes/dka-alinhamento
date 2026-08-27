@@ -1,0 +1,7 @@
+{
+  "version": "1.0.0",
+  "release_notes": "Versão inicial do sistema DKA Alinhamento - Oficina Desktop.",
+  "download_url_win": "https://github.com/AntonioDiogenes/dka-alinhamento/releases/download/v1.0.0/DKA_Alinhamento-Windows-x64.exe",
+  "download_url_linux": "https://github.com/AntonioDiogenes/dka-alinhamento/releases/download/v1.0.0/DKA_Alinhamento-Linux-x64.tar.gz",
+  "download_url_mac": "https://github.com/AntonioDiogenes/dka-alinhamento/releases/download/v1.0.0/DKA_Alinhamento-macOS.zip"
+}

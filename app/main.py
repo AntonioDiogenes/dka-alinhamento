@@ -122,6 +122,13 @@ def main():
     # Abrir a primeira tela (Dashboard)
     router.navigate("dashboard")
 
+    # Verificação assíncrona de atualizações automáticas em segundo plano
+    try:
+        from app.services.update_service import UpdateService
+        UpdateService.check_for_updates_async(root)
+    except Exception:
+        pass
+
     # Iniciar Loop Principal
     root.mainloop()
 
