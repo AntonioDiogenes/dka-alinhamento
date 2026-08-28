@@ -1,7 +1,7 @@
 {
-  "version": "1.0.6",
-  "release_notes": "🚀 Versão 1.0.6: Correção de validação de certificado SSL no download de atualizações para Windows.",
-  "download_url_win": "https://github.com/AntonioDiogenes/dka-alinhamento/releases/download/v1.0.6/DKA_Alinhamento-Windows-x64.exe",
-  "download_url_linux": "https://github.com/AntonioDiogenes/dka-alinhamento/releases/download/v1.0.6/DKA_Alinhamento-Linux-x64.tar.gz",
-  "download_url_mac": "https://github.com/AntonioDiogenes/dka-alinhamento/releases/download/v1.0.6/DKA_Alinhamento-macOS.zip"
+  "version": "1.0.7",
+  "release_notes": "🚀 Versão 1.0.7: Teste de atualização automática do sistema.",
+  "download_url_win": "https://github.com/AntonioDiogenes/dka-alinhamento/releases/download/v1.0.7/DKA_Alinhamento-Windows-x64.exe",
+  "download_url_linux": "https://github.com/AntonioDiogenes/dka-alinhamento/releases/download/v1.0.7/DKA_Alinhamento-Linux-x64.tar.gz",
+  "download_url_mac": "https://github.com/AntonioDiogenes/dka-alinhamento/releases/download/v1.0.7/DKA_Alinhamento-macOS.zip"
 }
