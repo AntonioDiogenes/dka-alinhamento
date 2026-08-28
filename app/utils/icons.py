@@ -5,6 +5,7 @@ Ajustado para espessura fina, elegante e ultra-nítida.
 import io
 import os
 import re
+import ssl
 import urllib.request
 import xml.etree.ElementTree as ET
 import math
@@ -58,7 +59,8 @@ def ensure_svg_icon(icon_key: str) -> str:
         url = f"https://cdn.jsdelivr.net/npm/lucide-static@latest/icons/{svg_name}"
         try:
             req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
-            with urllib.request.urlopen(req) as resp:
+            ctx = ssl._create_unverified_context()
+            with urllib.request.urlopen(req, context=ctx) as resp:
                 content = resp.read()
                 with open(svg_path, "wb") as f:
                     f.write(content)

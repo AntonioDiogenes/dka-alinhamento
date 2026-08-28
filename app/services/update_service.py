@@ -9,6 +9,7 @@ import os
 import sys
 import json
 import time
+import ssl
 import threading
 import subprocess
 import urllib.request
@@ -18,6 +19,21 @@ from pathlib import Path
 
 from app.config.version import CURRENT_VERSION, APP_NAME, VERSION_CHECK_URL
 from app.config.settings import COLORS, FONTS
+
+def _urlopen_with_ssl(req, timeout=None):
+    """Executa urlopen com validação SSL e faz fallback para unverified caso falhe no Windows/PyInstaller."""
+    try:
+        if timeout:
+            return urllib.request.urlopen(req, timeout=timeout)
+        return urllib.request.urlopen(req)
+    except Exception as e:
+        if "CERTIFICATE_VERIFY_FAILED" in str(e) or "certificate verify failed" in str(e):
+            ctx = ssl._create_unverified_context()
+            if timeout:
+                return urllib.request.urlopen(req, timeout=timeout, context=ctx)
+            return urllib.request.urlopen(req, context=ctx)
+        raise e
+
 
 # Suporte opcional ao Pystray para ícone na bandeja perto do relógio do Windows
 try:
@@ -136,7 +152,7 @@ class UpdateService:
                 VERSION_CHECK_URL,
                 headers={"User-Agent": f"{APP_NAME}-AutoUpdater"}
             )
-            with urllib.request.urlopen(req, timeout=5) as response:
+            with _urlopen_with_ssl(req, timeout=5) as response:
                 if response.status == 200:
                     data = json.loads(response.read().decode('utf-8'))
                     latest_version = data.get("version", "").strip()
@@ -381,7 +397,7 @@ class UpdateService:
             destination_path = download_dir / target_filename
 
             req = urllib.request.Request(download_url, headers={"User-Agent": f"{APP_NAME}-AutoUpdater"})
-            with urllib.request.urlopen(req) as response:
+            with _urlopen_with_ssl(req) as response:
                 total_length = response.getheader('content-length')
                 total_bytes = int(total_length) if total_length else 0
                 
