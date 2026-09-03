@@ -1,7 +1,7 @@
 """
 Configurações Globais de Versionamento do Aplicativo DKA Alinhamento.
 """
-CURRENT_VERSION = "1.0.9"
+CURRENT_VERSION = "1.1.0"
 APP_NAME = "DKA Alinhamento"
 
 # URL de checagem do manifesto de versão mais recente

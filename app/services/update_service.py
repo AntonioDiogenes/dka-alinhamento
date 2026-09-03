@@ -454,10 +454,11 @@ class UpdateService:
         if sys.platform.startswith("win"):
             bat_script = exe_dir / "updater.bat"
             bat_content = f"""@echo off
-timeout /t 2 /nobreak > nul
+timeout /t 3 /nobreak > nul
 if exist "{current_exe_name}" del /f /q "{current_exe_name}"
 if exist "{new_file_name}" move /y "{new_file_name}" "{current_exe_name}"
-start "" "{current_exe_name}"
+explorer.exe "{current_exe_name}"
+timeout /t 1 /nobreak > nul
 del "%~f0"
 """
             with open(bat_script, "w") as f:
