@@ -1,7 +1,7 @@
 {
-  "version": "1.0.8",
-  "release_notes": "🚀 Versão 1.0.8:\n• Busca por placa na listagem de clientes.\n• Suporte a alinhamento manual sem sensores e trava/destrava para sobrescrição manual.\n• Seleção de eixos no modal filtrada dinamicamente pela composição do veículo.\n• Fundo de tela personalizável e relógio transparente na Home.\n• Correção na rolagem global e padronização visual de inputs.",
-  "download_url_win": "https://github.com/AntonioDiogenes/dka-alinhamento/releases/download/v1.0.8/DKA_Alinhamento-Windows-x64.exe",
-  "download_url_linux": "https://github.com/AntonioDiogenes/dka-alinhamento/releases/download/v1.0.8/DKA_Alinhamento-Linux-x64.tar.gz",
-  "download_url_mac": "https://github.com/AntonioDiogenes/dka-alinhamento/releases/download/v1.0.8/DKA_Alinhamento-macOS.zip"
+  "version": "1.0.9",
+  "release_notes": "🚀 Versão 1.0.9:\n• Busca por placa na listagem de clientes.\n• Suporte a alinhamento manual sem sensores e trava/destrava para sobrescrição manual.\n• Seleção de eixos no modal filtrada dinamicamente pela composição do veículo.\n• Fundo de tela personalizável e relógio transparente na Home.\n• Correção na rolagem global e padronização visual de inputs.",
+  "download_url_win": "https://github.com/AntonioDiogenes/dka-alinhamento/releases/download/v1.0.9/DKA_Alinhamento-Windows-x64.exe",
+  "download_url_linux": "https://github.com/AntonioDiogenes/dka-alinhamento/releases/download/v1.0.9/DKA_Alinhamento-Linux-x64.tar.gz",
+  "download_url_mac": "https://github.com/AntonioDiogenes/dka-alinhamento/releases/download/v1.0.9/DKA_Alinhamento-macOS.zip"
 }
