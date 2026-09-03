@@ -33,6 +33,7 @@ class ClientesIndexView(tk.Frame):
         self.img_user = create_icon_image("user", size=16, color="#8a94a6")
         self.img_file = create_icon_image("file_text", size=16, color="#8a94a6")
         self.img_pin = create_icon_image("map_pin", size=16, color="#8a94a6")
+        self.img_truck = create_icon_image("truck", size=16, color="#8a94a6")
         self.img_eye = create_icon_image("eye", size=18, color="#60a5fa")
         self.img_pencil = create_icon_image("pencil", size=18, color="#f59e0b")
         self.img_trash = create_icon_image("trash", size=18, color="#ef4444")
@@ -105,6 +106,8 @@ class ClientesIndexView(tk.Frame):
         )
         self.toolbar.pack(fill="x", side="top")
 
+        self.var_filter_placa = tk.StringVar()
+
         self.btn_clear_filters = tk.Button(
             self.toolbar,
             text=" Limpar Filtros",
@@ -120,6 +123,48 @@ class ClientesIndexView(tk.Frame):
             command=self._clear_filters
         )
         self.btn_clear_filters.pack(side="left")
+
+        # Campo de busca por Placa na Toolbar
+        placa_box = tk.Frame(
+            self.toolbar,
+            bg="#0d1117",
+            highlightbackground=COLORS["border_subtle"],
+            highlightthickness=1,
+            padx=10,
+            pady=4
+        )
+        placa_box.pack(side="left", padx=(16, 0))
+
+        lbl_p_icon = tk.Label(placa_box, image=self.img_truck, bg="#0d1117")
+        lbl_p_icon.pack(side="left", padx=(0, 6))
+
+        entry_p = tk.Entry(
+            placa_box,
+            textvariable=self.var_filter_placa,
+            bg="#0d1117",
+            fg=COLORS["text_white"],
+            insertbackground="white",
+            bd=0,
+            highlightthickness=0,
+            font=("Segoe UI", 11)
+        )
+        entry_p.pack(side="left", fill="x", ipady=4)
+
+        def on_p_focus_in(e):
+            if entry_p.get() == "Filtrar placa...":
+                entry_p.delete(0, tk.END)
+                entry_p.config(fg=COLORS["text_white"])
+
+        def on_p_focus_out(e):
+            if not entry_p.get():
+                entry_p.insert(0, "Filtrar placa...")
+                entry_p.config(fg="#6b7280")
+
+        entry_p.insert(0, "Filtrar placa...")
+        entry_p.config(fg="#6b7280")
+        entry_p.bind("<FocusIn>", on_p_focus_in)
+        entry_p.bind("<FocusOut>", on_p_focus_out)
+        entry_p.bind("<KeyRelease>", lambda e: self._on_filter_changed())
 
         # ------------------------------------------
         # 3. Card Envelopador da Tabela (#1a1f2e)
@@ -268,8 +313,8 @@ class ClientesIndexView(tk.Frame):
             bg="#0d1117",
             highlightbackground=COLORS["border_subtle"],
             highlightthickness=1,
-            padx=8,
-            pady=4
+            padx=10,
+            pady=6
         )
         box.grid(row=0, column=col, sticky="ew", padx=12)
 
@@ -284,9 +329,9 @@ class ClientesIndexView(tk.Frame):
             insertbackground="white",
             bd=0,
             highlightthickness=0,
-            font=("Segoe UI", 9)
+            font=("Segoe UI", 11)
         )
-        entry.pack(side="left", fill="x", expand=True)
+        entry.pack(side="left", fill="x", expand=True, ipady=4)
 
         def on_focus_in(e):
             if entry.get() == placeholder:
@@ -314,15 +359,18 @@ class ClientesIndexView(tk.Frame):
         n_val = self.var_filter_nome.get()
         c_val = self.var_filter_cpf.get()
         cid_val = self.var_filter_cidade.get()
+        p_val = self.var_filter_placa.get()
 
         n_f = "" if n_val == "Filtrar nome..." else n_val
         c_f = "" if c_val == "Filtrar CPF/CNPJ..." else c_val
         cid_f = "" if cid_val == "Filtrar cidade..." else cid_val
+        p_f = "" if p_val == "Filtrar placa..." else p_val
 
         self.filtered_clients = ClientService.filter_clients(
             nome_filter=n_f,
             cpf_cnpj_filter=c_f,
-            cidade_filter=cid_f
+            cidade_filter=cid_f,
+            placa_filter=p_f
         )
         self._render_rows()
 
@@ -330,6 +378,7 @@ class ClientesIndexView(tk.Frame):
         self.var_filter_nome.set("")
         self.var_filter_cpf.set("")
         self.var_filter_cidade.set("")
+        self.var_filter_placa.set("")
         self.current_page = 1
         self._apply_filters()
 

@@ -4,6 +4,7 @@ Encapsula todas as operações de banco de dados para a entidade Cliente.
 """
 from typing import List, Dict, Any, Optional
 from app.models.client import ClientModel
+from app.models.attendance import AttendanceModel
 from app.database.connection import get_session
 
 class ClientRepository:
@@ -30,6 +31,7 @@ class ClientRepository:
         nome_filter: str = "",
         doc_filter: str = "",
         cidade_filter: str = "",
+        placa_filter: str = "",
         status_filter: str = "Todos",
         **kwargs
     ) -> List[Dict[str, Any]]:
@@ -46,6 +48,14 @@ class ClientRepository:
 
             if cidade_filter:
                 query = query.filter(ClientModel.cidade.ilike(f"%{cidade_filter.strip()}%"))
+
+            placa = placa_filter or kwargs.get("placa", "")
+            if placa:
+                matching_atts = session.query(AttendanceModel.client).filter(
+                    AttendanceModel.plate.ilike(f"%{placa.strip()}%")
+                ).all()
+                matching_names = [a[0] for a in matching_atts if a[0]]
+                query = query.filter(ClientModel.nome.in_(matching_names))
 
             if status_filter == "Ativos":
                 query = query.filter(ClientModel.ativo == True)

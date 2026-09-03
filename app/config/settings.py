@@ -40,11 +40,15 @@ MOCK_UNIDADES = [
     {"id": 3, "nome": "Oficina Filial - Curitiba"},
 ]
 
+from app.config.user_settings import load_user_settings, save_user_settings
+
 class AppState:
     """Estado global mutável da aplicação em tempo de execução."""
     def __init__(self):
         self.active_unit = MOCK_UNIDADES[0]
         self.unidades = MOCK_UNIDADES
-        self.custom_bg_path = None
+        saved_settings = load_user_settings()
+        self.custom_bg_path = saved_settings.get("custom_bg_path")
 
 state = AppState()
+

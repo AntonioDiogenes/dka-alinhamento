@@ -22,6 +22,7 @@ class TruckCard(tk.Frame):
         super().__init__(
             parent,
             bg="#2c2c2c",
+            width=320,
             height=128,
             highlightbackground="#3b4252",
             highlightthickness=1,
@@ -29,9 +30,10 @@ class TruckCard(tk.Frame):
             **kwargs
         )
         self.pack_propagate(False)
+        self.grid_propagate(False)
 
-        self.grid_columnconfigure(0, weight=1) # Lado Esquerdo (1/3)
-        self.grid_columnconfigure(1, weight=2) # Lado Direito (2/3)
+        self.grid_columnconfigure(0, weight=1, uniform="card_col") # Lado Esquerdo (1/3)
+        self.grid_columnconfigure(1, weight=2, uniform="card_col") # Lado Direito (2/3)
         self.grid_rowconfigure(0, weight=1)
 
         self._build_ui()
@@ -40,7 +42,9 @@ class TruckCard(tk.Frame):
     def _build_ui(self):
         brand_code = self.truck_data.get("brand_code", "TRK")
         brand_name = self.truck_data.get("brand_name", "Marca")
-        category = self.truck_data.get("category", "TRUCK")
+        category = self.truck_data.get("category", "VEÍCULO")
+        if category == "TRUCK":
+            category = "VEÍCULO"
         model_name = self.truck_data.get("model_name", "Modelo")
         rim_size = self.truck_data.get("rim_size", "22")
 

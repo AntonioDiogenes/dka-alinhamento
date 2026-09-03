@@ -268,8 +268,8 @@ class AttendancesIndexView(tk.Frame):
             bg="#0d1117",
             highlightbackground=COLORS["border_subtle"],
             highlightthickness=1,
-            padx=8,
-            pady=4
+            padx=10,
+            pady=6
         )
         box.grid(row=0, column=col, sticky="ew", padx=12)
 
@@ -284,9 +284,9 @@ class AttendancesIndexView(tk.Frame):
             insertbackground="white",
             bd=0,
             highlightthickness=0,
-            font=("Segoe UI", 9)
+            font=("Segoe UI", 11)
         )
-        entry.pack(side="left", fill="x", expand=True)
+        entry.pack(side="left", fill="x", expand=True, ipady=4)
 
         def on_focus_in(e):
             if entry.get() == placeholder:

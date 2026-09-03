@@ -235,11 +235,13 @@ class ClientForm(tk.Frame):
             fg=self.input_fg,
             insertbackground="white",
             bd=1,
+            relief="solid",
             highlightbackground="#2a3245",
-            font=("Segoe UI", 10),
+            highlightthickness=1,
+            font=("Segoe UI", 11),
             state="disabled" if self.read_only else "normal"
         )
-        entry.pack(fill="x")
+        entry.pack(fill="x", ipady=6)
 
     def _mask_cpf_cnpj(self, *args):
         raw = "".join(filter(str.isdigit, self.var_cpf_cnpj.get()))[:14]

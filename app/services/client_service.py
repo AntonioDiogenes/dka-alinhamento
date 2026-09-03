@@ -20,6 +20,7 @@ class ClientService:
         nome_filter: str = "",
         cpf_cnpj_filter: str = "",
         cidade_filter: str = "",
+        placa_filter: str = "",
         status_filter: str = "Todos",
         **kwargs
     ) -> List[Dict[str, Any]]:
@@ -27,6 +28,7 @@ class ClientService:
             nome_filter=nome_filter,
             doc_filter=cpf_cnpj_filter,
             cidade_filter=cidade_filter,
+            placa_filter=placa_filter,
             status_filter=status_filter,
             **kwargs
         )

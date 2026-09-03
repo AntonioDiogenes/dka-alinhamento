@@ -22,6 +22,7 @@ class ControlPanel(tk.Frame):
         on_back_initial: Optional[Callable[[], None]] = None,
         on_advance: Optional[Callable[[], None]] = None,
         on_toggle_simulation: Optional[Callable[[], bool]] = None,
+        on_toggle_override: Optional[Callable[[], bool]] = None,
         **kwargs
     ):
         super().__init__(
@@ -43,6 +44,8 @@ class ControlPanel(tk.Frame):
         self.on_back_initial = on_back_initial
         self.on_advance = on_advance
         self.on_toggle_simulation = on_toggle_simulation
+        self.on_toggle_override = on_toggle_override
+        self.is_manual_override = False
 
         # Ícones
         self.img_back = create_icon_image("chevron_left", size=18, color="#FFFFFF")
@@ -172,6 +175,24 @@ class ControlPanel(tk.Frame):
                 "cell": cell
             }
 
+        # Botão de Opção: Permitir Edição Manual mesmo com sensor conectado
+        self.btn_toggle_override = tk.Button(
+            sensor_box,
+            text="✏️ Habilitar Edição Manual",
+            font=("Segoe UI", 9, "bold"),
+            fg="#FFFFFF",
+            bg="#2a3245",
+            activebackground="#0284c7",
+            activeforeground="white",
+            bd=1,
+            relief="solid",
+            highlightbackground="#3b82f6",
+            pady=6,
+            cursor="hand2",
+            command=self._handle_toggle_override
+        )
+        self.btn_toggle_override.pack(fill="x", pady=(10, 0))
+
         # 3. BOTOEIRA DE NAVEGAÇÃO INFERIOR
         bot_nav = tk.Frame(self, bg="#272f43")
         bot_nav.pack(fill="x", side="bottom", pady=(16, 0))
@@ -248,14 +269,27 @@ class ControlPanel(tk.Frame):
             if self.on_change_rim:
                 self.on_change_rim(self.rim_size)
 
+    def _handle_toggle_override(self):
+        if self.on_toggle_override:
+            self.is_manual_override = self.on_toggle_override()
+            self.update_override_button(self.is_manual_override)
+
+    def update_override_button(self, is_override: bool):
+        self.is_manual_override = is_override
+        if is_override:
+            self.btn_toggle_override.config(
+                text="🔓 Sobrescrição Manual: ATIVADA",
+                bg="#0284c7",
+                activebackground="#0369a1"
+            )
+        else:
+            self.btn_toggle_override.config(
+                text="✏️ Habilitar Edição Manual",
+                bg="#2a3245",
+                activebackground="#0284c7"
+            )
+
     def _handle_toggle_sim(self):
-        # if self.on_toggle_simulation:
-        #     active = self.on_toggle_simulation()
-        #     if hasattr(self, "btn_toggle_sim"):
-        #         if active:
-        #             self.btn_toggle_sim.config(text="SIMULAÇÃO ON", bg="#10b981", fg="white")
-        #         else:
-        #             self.btn_toggle_sim.config(text="SIMULAR", bg="#2a3245", fg="#f59e0b")
         pass
 
     def update_sensor_head(self, pos_id: int, is_connected: bool, batt_percent: int):

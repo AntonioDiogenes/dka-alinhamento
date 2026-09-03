@@ -17,6 +17,7 @@ from app.components.alignment_indicator import AlignmentIndicator
 from app.components.control_panel import ControlPanel
 from app.components.select_axle_modal import SelectAxleModal
 from app.services.sensor_service import SensorService
+from app.utils.scroll_helper import setup_canvas_scrolling
 
 class TrucksMedidasView(tk.Frame):
     def __init__(self, parent: tk.Widget, router, kwargs=None):
@@ -27,6 +28,7 @@ class TrucksMedidasView(tk.Frame):
         # Estado da Medição
         self.active_tab = "inicial" # "inicial" ou "final"
         self.rim_size = 22
+        self.is_manual_override = False # Permite edição manual mesmo com sensor ligado
 
         # Serviço de Sensores DKA
         self.sensor_service = SensorService.get_instance()
@@ -36,15 +38,9 @@ class TrucksMedidasView(tk.Frame):
         # Referências aos cartões ativos para atualização direta sem reconstruir todo o DOM
         self.active_cards = {}
 
-        # Lista de Eixos da Composição
-        self.axles_list = [
-            {"id": "D1", "name": "Dianteiro 1", "is_steering": True},
-            {"id": "D2", "name": "Dianteiro 2", "is_steering": True},
-            {"id": "T1", "name": "Traseiro 1 (Tração)", "is_steering": False},
-            {"id": "T2", "name": "Traseiro 2 (Tração)", "is_steering": False},
-            {"id": "C1", "name": "Carreta 1", "is_steering": False},
-        ]
-        self.active_axle = self.axles_list[0] # Eixo D1 por padrão
+        # Lista de Eixos da Composição (gerada dinamicamente a partir da tela de configuração anterior)
+        self.axles_list = self._build_axles_from_composition()
+        self.active_axle = self.axles_list[0] # Primeiro eixo por padrão
 
         # Dicionário de armazenamento de medições: {tab: {axle_id: {param: val}}}
         self.measurements_store = {
@@ -59,6 +55,119 @@ class TrucksMedidasView(tk.Frame):
         }
 
         self._build_ui()
+        self._update_mode_ui_and_cards()
+
+    def _build_axles_from_composition(self) -> List[Dict[str, Any]]:
+        units = (
+            self.kwargs.get("composition_units") or
+            self.kwargs.get("units_data") or
+            [{"type": "Cavalo Mecânico", "front_axles": 1, "rear_axles": 2}]
+        )
+
+        axles = []
+        d_count = 1
+        t_count = 1
+        c_count = 1
+
+        for u in units:
+            u_type = u.get("type", "Cavalo Mecânico")
+            is_trailer = u_type in ["Semirreboque", "Reboque", "Dolly", "Implemento"]
+            f_axles = u.get("front_axles", 0 if is_trailer else 1)
+            r_axles = u.get("rear_axles", 2 if not is_trailer else 3)
+
+            # Eixos Dianteiros (Direcionais)
+            for _ in range(f_axles):
+                axles.append({
+                    "id": f"D{d_count}",
+                    "name": f"Dianteiro {d_count}",
+                    "is_steering": True,
+                    "unit_type": u_type
+                })
+                d_count += 1
+
+            # Eixos Traseiros (Tração ou Carreta)
+            for _ in range(r_axles):
+                if is_trailer:
+                    axles.append({
+                        "id": f"C{c_count}",
+                        "name": f"Carreta {c_count}",
+                        "is_steering": False,
+                        "unit_type": u_type
+                    })
+                    c_count += 1
+                else:
+                    axles.append({
+                        "id": f"T{t_count}",
+                        "name": f"Traseiro {t_count} (Tração)",
+                        "is_steering": False,
+                        "unit_type": u_type
+                    })
+                    t_count += 1
+
+        if not axles:
+            axles = [
+                {"id": "D1", "name": "Dianteiro 1", "is_steering": True},
+                {"id": "T1", "name": "Traseiro 1 (Tração)", "is_steering": False}
+            ]
+
+        return axles
+
+    def _is_sensor_connected(self) -> bool:
+        if not hasattr(self, "sensor_service"):
+            return False
+        import time
+        now = time.time()
+        for pos_id, last_upd in self.sensor_service.last_updates.items():
+            if last_upd > 0 and (now - last_upd) < 5.0:
+                h = self.sensor_service.heads_data.get(pos_id)
+                if h and h.get("conectado", True):
+                    return True
+        return False
+
+    def _get_alignment_mode(self) -> str:
+        if not self._is_sensor_connected():
+            return "MANUAL"
+        if self.is_manual_override:
+            return "SENSOR_OVERRIDE"
+        return "SENSOR"
+
+    def _toggle_manual_override(self) -> bool:
+        self.is_manual_override = not self.is_manual_override
+        self._update_mode_ui_and_cards()
+        return self.is_manual_override
+
+    def _update_mode_ui_and_cards(self):
+        mode = self._get_alignment_mode()
+        is_read_only = (mode == "SENSOR")
+
+        if mode == "MANUAL":
+            self.lbl_mode_badge.config(
+                text="🖐️ Modo Manual (Sensores Não Conectados)",
+                fg="#f59e0b"
+            )
+        elif mode == "SENSOR_OVERRIDE":
+            self.lbl_mode_badge.config(
+                text="✏️ SENSOR LIGADO — EDIÇÃO MANUAL ATIVADA",
+                fg="#38bdf8"
+            )
+        else: # SENSOR
+            self.lbl_mode_badge.config(
+                text="📡 Modo Sensor (Leitura Automática)",
+                fg="#10b981"
+            )
+
+        for card in self.active_cards.values():
+            if hasattr(card, "set_read_only"):
+                card.set_read_only(is_read_only)
+
+    def _on_advance_next(self):
+        mode = self._get_alignment_mode()
+        self.router.navigate(
+            "trucks.finalizar",
+            store=self.measurements_store,
+            units_data=self.kwargs.get("units_data"),
+            alignment_mode=mode
+        )
 
     def _get_active_data(self) -> Dict[str, float]:
         tab_data = self.measurements_store.setdefault(self.active_tab, {})
@@ -150,6 +259,7 @@ class TrucksMedidasView(tk.Frame):
         self.grid_canvas.create_window((0, 0), window=self.grid_inner, anchor="nw")
 
         self.grid_canvas.bind("<Configure>", lambda e: self.grid_canvas.itemconfig(self.grid_canvas.find_withtag("all")[0], width=e.width))
+        setup_canvas_scrolling(self.grid_canvas, self.grid_inner)
 
         self.grid_inner.grid_columnconfigure(0, weight=1)
         self.grid_inner.grid_columnconfigure(1, weight=1)
@@ -165,8 +275,8 @@ class TrucksMedidasView(tk.Frame):
             on_change_rim=self._on_change_rim,
             on_open_axle_modal=self._open_axle_modal,
             on_back_initial=lambda: self.router.navigate("trucks.setup"),
-            on_advance=lambda: self.router.navigate("trucks.finalizar", store=self.measurements_store),
-            # on_toggle_simulation=self._toggle_simulation
+            on_advance=self._on_advance_next,
+            on_toggle_override=self._toggle_manual_override
         )
         self.control_panel.pack(side="right", fill="y")
 
@@ -220,6 +330,7 @@ class TrucksMedidasView(tk.Frame):
         self.active_cards.clear()
         data = self._get_active_data()
         is_steering = self.active_axle.get("is_steering", True)
+        is_read_only = (self._get_alignment_mode() == "SENSOR")
 
         if is_steering:
             # ==========================================
@@ -361,58 +472,53 @@ class TrucksMedidasView(tk.Frame):
         is_connected = data.get("conectado", True)
         batt = data.get("batt", 0)
 
-        # 1. Atualizar indicador no painel lateral
+        # 1. Atualizar indicador no painel lateral e estado de modo
         self.control_panel.update_sensor_head(pos_id, is_connected, batt)
+        self._update_mode_ui_and_cards()
 
         if not is_connected:
             return
 
-        active_data = self._get_active_data()
-        is_steering = self.active_axle.get("is_steering", True)
+        # Se em Modo Sensor Automático (sem sobrescrição manual), atualizar valores dos sensores
+        if self._get_alignment_mode() == "SENSOR":
+            active_data = self._get_active_data()
+            is_steering = self.active_axle.get("is_steering", True)
 
-        # Mapeamento do cabeçote (POS) para a roda em medição:
-        # Se Eixo Direcional (D1, D2):
-        #   pos_id 0 (DM): Esquerda (camber, caster, conv, kpi)
-        #   pos_id 1 (DP): Direita (camber, caster, conv, kpi)
-        # Se Eixo Traseiro/Tração/Carreta (T1, T2, C1):
-        #   pos_id 2 (TM): Esquerda (camber, conv)
-        #   pos_id 3 (TP): Direita (camber, conv)
+            if is_steering:
+                if pos_id == 0:  # DM
+                    if "conv" in data:   active_data["conv_l"] = data["conv"]
+                    if "camber" in data: active_data["camb_l"] = data["camber"]
+                    if "caster" in data: active_data["cast_l"] = data["caster"]
+                    if "kpi" in data:    active_data["kpi_l"]  = data["kpi"]
+                elif pos_id == 1:  # DP
+                    if "conv" in data:   active_data["conv_r"] = data["conv"]
+                    if "camber" in data: active_data["camb_r"] = data["camber"]
+                    if "caster" in data: active_data["cast_r"] = data["caster"]
+                    if "kpi" in data:    active_data["kpi_r"]  = data["kpi"]
 
-        if is_steering:
-            if pos_id == 0:  # DM
-                if "conv" in data:   active_data["conv_l"] = data["conv"]
-                if "camber" in data: active_data["camb_l"] = data["camber"]
-                if "caster" in data: active_data["cast_l"] = data["caster"]
-                if "kpi" in data:    active_data["kpi_l"]  = data["kpi"]
-            elif pos_id == 1:  # DP
-                if "conv" in data:   active_data["conv_r"] = data["conv"]
-                if "camber" in data: active_data["camb_r"] = data["camber"]
-                if "caster" in data: active_data["cast_r"] = data["caster"]
-                if "kpi" in data:    active_data["kpi_r"]  = data["kpi"]
+                active_data["conv_tot"] = round(active_data.get("conv_l", 0.0) + active_data.get("conv_r", 0.0), 2)
+            else:
+                if pos_id == 2:  # TM
+                    if "conv" in data:   active_data["conv_l"] = data["conv"]
+                    if "camber" in data: active_data["camb_l"] = data["camber"]
+                elif pos_id == 3:  # TP
+                    if "conv" in data:   active_data["conv_r"] = data["conv"]
+                    if "camber" in data: active_data["camb_r"] = data["camber"]
 
-            active_data["conv_tot"] = round(active_data.get("conv_l", 0.0) + active_data.get("conv_r", 0.0), 2)
-        else:
-            if pos_id == 2:  # TM
-                if "conv" in data:   active_data["conv_l"] = data["conv"]
-                if "camber" in data: active_data["camb_l"] = data["camber"]
-            elif pos_id == 3:  # TP
-                if "conv" in data:   active_data["conv_r"] = data["conv"]
-                if "camber" in data: active_data["camb_r"] = data["camber"]
+                active_data["conv_tot"] = round(active_data.get("conv_l", 0.0) + active_data.get("conv_r", 0.0), 2)
 
-            active_data["conv_tot"] = round(active_data.get("conv_l", 0.0) + active_data.get("conv_r", 0.0), 2)
+            # 2. Atualizar cartões visuais diretamente
+            for key, card in self.active_cards.items():
+                if key in active_data:
+                    card.update_value(active_data[key])
 
-        # 2. Atualizar cartões visuais diretamente
-        for key, card in self.active_cards.items():
-            if key in active_data:
-                card.update_value(active_data[key])
-
-        # 3. Atualizar indicadores de inclinação visual de pneus
-        if hasattr(self, "ind_camber"):
-            self.ind_camber.update_angles(active_data.get("camb_l", 0.0), active_data.get("camb_r", 0.0))
-        if hasattr(self, "ind_caster"):
-            self.ind_caster.update_angles(active_data.get("cast_l", 0.0), active_data.get("cast_r", 0.0))
-        if hasattr(self, "ind_kpi"):
-            self.ind_kpi.update_angles(active_data.get("kpi_l", 0.0), active_data.get("kpi_r", 0.0))
+            # 3. Atualizar indicadores de inclinação visual de pneus
+            if hasattr(self, "ind_camber"):
+                self.ind_camber.update_angles(active_data.get("camb_l", 0.0), active_data.get("camb_r", 0.0))
+            if hasattr(self, "ind_caster"):
+                self.ind_caster.update_angles(active_data.get("cast_l", 0.0), active_data.get("cast_r", 0.0))
+            if hasattr(self, "ind_kpi"):
+                self.ind_kpi.update_angles(active_data.get("kpi_l", 0.0), active_data.get("kpi_r", 0.0))
 
     def destroy(self):
         if hasattr(self, "sensor_service"):

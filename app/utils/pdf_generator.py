@@ -90,6 +90,14 @@ def generate_alignment_pdf(final_data: Dict[str, Any], filename: str = "Relatori
     tecnico = final_data.get("tecnico", "Técnico Alinhador")
     obs = final_data.get("observacoes", "Alinhamento e geometria conforme normas do fabricante.")
 
+    alignment_mode = final_data.get("alignment_mode", "MANUAL")
+    if alignment_mode == "MANUAL":
+        mode_str = "<font color='#d97706'><b>AJUSTE MANUAL (SEM SENSORES CONECTADOS)</b></font>"
+    elif alignment_mode == "SENSOR_OVERRIDE":
+        mode_str = "<font color='#0284c7'><b>AJUSTE COM SENSOR (SOBRESCRIÇÃO MANUAL ATIVADA)</b></font>"
+    else:
+        mode_str = "<font color='#059669'><b>LEITURA AUTOMÁTICA DE SENSORES DKA (TCP 5000)</b></font>"
+
     client_info = [
         [
             Paragraph(f"<b>CLIENTE:</b> {client.get('nome', 'N/A')}", normal_style),
@@ -98,6 +106,10 @@ def generate_alignment_pdf(final_data: Dict[str, Any], filename: str = "Relatori
         [
             Paragraph(f"<b>LOCALIDADE:</b> {client.get('cidade', 'São Paulo')} - {client.get('uf', 'SP')}", normal_style),
             Paragraph(f"<b>TÉCNICO:</b> {tecnico}", normal_style)
+        ],
+        [
+            Paragraph(f"<b>TIPO DE ALINHAMENTO:</b> {mode_str}", normal_style),
+            Paragraph(f"<b>DATA DO SERVIÇO:</b> Concluído", normal_style)
         ]
     ]
     t_client = Table(client_info, colWidths=[270, 270])

@@ -19,6 +19,7 @@ class ToleranceCard(tk.Frame):
         unit: str = "mm",
         step: float = 0.01,
         on_change: Optional[Callable[[float], None]] = None,
+        read_only: bool = False,
         **kwargs
     ):
         super().__init__(
@@ -38,6 +39,7 @@ class ToleranceCard(tk.Frame):
         self.unit = unit
         self.step = step
         self.on_change = on_change
+        self.read_only = read_only
         self.is_editing = False
 
         self._build_ui()
@@ -146,8 +148,13 @@ class ToleranceCard(tk.Frame):
         self.gauge_canvas.bind("<B1-Motion>", self._on_gauge_drag)
         self.gauge_canvas.bind("<ButtonRelease-1>", self._on_gauge_drag)
 
+    def set_read_only(self, read_only: bool):
+        self.read_only = read_only
+
     def _on_gauge_drag(self, event):
         """Permite puxar e arrastar o ponteiro (setinha) para alterar o valor da medição."""
+        if self.read_only:
+            return
         w = max(self.gauge_canvas.winfo_width(), 200)
         x = max(6, min(w - 6, event.x))
         rel_pos = (x - 6) / max(1, (w - 12))
@@ -218,17 +225,21 @@ class ToleranceCard(tk.Frame):
         self._update_color_and_state()
 
     def _decrement(self):
+        if self.read_only:
+            return
         self.update_value(self.value - self.step)
         if self.on_change:
             self.on_change(self.value)
 
     def _increment(self):
+        if self.read_only:
+            return
         self.update_value(self.value + self.step)
         if self.on_change:
             self.on_change(self.value)
 
     def _enable_entry(self, event=None):
-        if self.is_editing:
+        if self.read_only or self.is_editing:
             return
         self.is_editing = True
         self.lbl_value.pack_forget()

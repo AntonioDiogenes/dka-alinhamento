@@ -12,6 +12,7 @@ from app.config.settings import COLORS, FONTS
 from app.components.alignment_header import AlignmentHeader
 from app.components.truck_chassis_preview import TruckChassisPreview
 from app.utils.icons import create_icon_image
+from app.utils.scroll_helper import setup_canvas_scrolling
 
 UNIT_TYPES = [
     "Cavalo Mecânico", "Caminhão Rígido", "Semirreboque", "Reboque", "Dolly", "Implemento"
@@ -117,6 +118,7 @@ class TrucksSetupView(tk.Frame):
 
         self.form_inner.bind("<Configure>", lambda e: self.canvas_form.configure(scrollregion=self.canvas_form.bbox("all")))
         self.canvas_form.bind("<Configure>", lambda e: self.canvas_form.itemconfig(self.canvas_form.find_withtag("all")[0], width=e.width))
+        setup_canvas_scrolling(self.canvas_form, self.form_inner)
 
         # ------------------------------------------
         # COLUNA DIREITA: TRUCK CHASSIS PREVIEW + BOTÃO NO CANTO INFERIOR DIREITO

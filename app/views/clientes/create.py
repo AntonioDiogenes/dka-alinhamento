@@ -10,6 +10,7 @@ from app.config.settings import COLORS
 from app.services.client_service import ClientService
 from app.components.client_form import ClientForm
 from app.utils.icons import create_icon_image
+from app.utils.scroll_helper import setup_canvas_scrolling
 
 class ClientCreateView(tk.Frame):
     def __init__(self, parent: tk.Widget, router, kwargs=None):
@@ -51,19 +52,24 @@ class ClientCreateView(tk.Frame):
         )
         lbl_title.pack(side="left")
 
-        # Container Principal
+        # Container Principal com Canvas Rolável
         self.main_area = tk.Frame(self, bg=COLORS["bg_dark"], padx=32, pady=24)
         self.main_area.pack(fill="both", expand=True)
 
-        # Formulário Reutilizável ClientForm
+        self.canvas = tk.Canvas(self.main_area, bg=COLORS["bg_dark"], highlightthickness=0, bd=0)
+        self.canvas.pack(fill="both", expand=True)
+
         self.form = ClientForm(
-            self.main_area,
+            self.canvas,
             client_data=None,
             read_only=False,
             on_save=self._on_save,
             on_cancel=self._on_cancel
         )
-        self.form.pack(fill="both", expand=True)
+        self.canvas.create_window((0, 0), window=self.form, anchor="nw")
+        self.form.bind("<Configure>", lambda e: self.canvas.configure(scrollregion=self.canvas.bbox("all")))
+        self.canvas.bind("<Configure>", lambda e: self.canvas.itemconfig(self.canvas.find_withtag("all")[0], width=e.width))
+        setup_canvas_scrolling(self.canvas, self.form)
 
     def _on_save(self, data: Dict[str, Any]):
         saved = ClientService.save_client(data)

@@ -9,6 +9,7 @@ from tkinter import filedialog, messagebox
 from PIL import Image
 
 from app.config.settings import COLORS, FONTS, state
+from app.config.user_settings import save_user_settings
 from app.components.nav_card import NavCard
 from app.utils.icons import create_icon_image, pil_to_photoimage
 
@@ -26,131 +27,92 @@ class DashboardView(tk.Frame):
         self.canvas = tk.Canvas(self, bg=COLORS["bg_dark"], highlightthickness=0, bd=0)
         self.canvas.pack(fill="both", expand=True)
 
-        # 2. Container de Interface (Posicionado sobre o Canvas)
-        self.main_container = tk.Frame(self.canvas, bg=COLORS["bg_dark"], bd=0, highlightthickness=0)
-        self.container_window = self.canvas.create_window(0, 0, window=self.main_container, anchor="nw")
+        # 2. Relógio Digital como texto transparente diretamente sobre o Canvas (sem caixa preta)
+        self.clock_text_id = self.canvas.create_text(
+            1200, 95,
+            text="00:00",
+            font=FONTS["title_clock"],
+            fill=COLORS["text_white"],
+            anchor="ne"
+        )
 
-        # Configurar grid responsivo do container principal
-        self.main_container.grid_rowconfigure(0, weight=0) # Header
-        self.main_container.grid_rowconfigure(1, weight=1) # Espaçador Flexível Central
-        self.main_container.grid_rowconfigure(2, weight=0) # Base (Cards)
-        self.main_container.grid_columnconfigure(0, weight=1)
-
-        # Evento de Redimensionamento para ajustar layout e imagem de fundo
-        self.canvas.bind("<Configure>", self._on_resize)
-
-        # Construção da Interface
-        self._build_ui()
-
-        # Iniciar Relógio Digital
-        self._update_clock()
-
-    def _build_ui(self):
-        """Monta o layout limpo sem duplicações visuais."""
-        # ==========================================
-        # 1. SEÇÃO TOPO: HEADER DESKTOP
-        # ==========================================
-        self.header_frame = tk.Frame(self.main_container, bg=COLORS["bg_dark"], bd=0, highlightthickness=0)
-        self.header_frame.grid(row=0, column=0, sticky="ew", padx=36, pady=(32, 0))
-        self.header_frame.grid_columnconfigure(0, weight=1) # Espaço à esquerda
-        self.header_frame.grid_columnconfigure(1, weight=0) # Direita (Ações + Relógio)
-
-        # CANTO SUPERIOR DIREITO — AÇÕES E RELÓGIO DIGITAL
-        self.right_header = tk.Frame(self.header_frame, bg=COLORS["bg_dark"], bd=0, highlightthickness=0)
-        self.right_header.grid(row=0, column=1, sticky="ne")
-
-        # Linha Superior (Botões de Ação: Engrenagem e Logout)
-        self.actions_row = tk.Frame(self.right_header, bg=COLORS["bg_dark"], bd=0, highlightthickness=0)
-        self.actions_row.pack(anchor="e", pady=(0, 8))
-
-        # Ícone Settings (Size 32)
-        self.img_gear = create_icon_image("gear", size=32, color=COLORS["text_white"])
+        # 3. Botão Configurações Flutuante Direto no Canvas
         self.btn_settings = tk.Button(
-            self.actions_row,
-            image=self.img_gear,
-            bg=COLORS["bg_dark"],
-            activebackground=COLORS["bg_card"],
-            bd=0,
-            highlightthickness=0,
+            self.canvas,
+            text="Configurações",
+            font=("Segoe UI", 11, "bold"),
+            fg=COLORS["text_white"],
+            bg=COLORS["bg_card"],
+            activebackground=COLORS["accent_blue"],
+            activeforeground="white",
+            bd=1,
+            relief="solid",
+            highlightbackground=COLORS["border_subtle"],
+            padx=14,
+            pady=5,
             cursor="hand2",
             command=self._show_settings_menu
         )
-        self.btn_settings.pack(side="left", padx=(0, 16))
+        self.btn_settings_window = self.canvas.create_window(1080, 24, window=self.btn_settings, anchor="ne")
 
-        # Ícone LogOut (Size 32)
-        self.img_logout = create_icon_image("logout", size=32, color=COLORS["text_white"])
+        # 4. Botão Sair Flutuante Direto no Canvas
         self.btn_logout = tk.Button(
-            self.actions_row,
-            image=self.img_logout,
-            bg=COLORS["bg_dark"],
-            activebackground=COLORS["bg_card"],
+            self.canvas,
+            text="Sair",
+            font=("Segoe UI", 11, "bold"),
+            fg=COLORS["text_white"],
+            bg="#ef4444",
+            activebackground="#dc2626",
+            activeforeground="white",
             bd=0,
-            highlightthickness=0,
+            padx=16,
+            pady=5,
             cursor="hand2",
             command=self._on_logout
         )
-        self.btn_logout.pack(side="left")
+        self.btn_logout_window = self.canvas.create_window(1200, 24, window=self.btn_logout, anchor="ne")
 
-        # Linha Inferior (Relógio Digital de Parede 64px)
-        self.lbl_clock = tk.Label(
-            self.right_header,
-            text="00:00",
-            font=FONTS["title_clock"],
-            fg=COLORS["text_white"],
-            bg=COLORS["bg_dark"]
-        )
-        self.lbl_clock.pack(anchor="e")
-
-        # ==========================================
-        # 2. ESPAÇADOR FLEXÍVEL CENTRAL (Ajuste Responsivo)
-        # ==========================================
-        self.spacer = tk.Frame(self.main_container, bg=COLORS["bg_dark"], bd=0, highlightthickness=0)
-        self.spacer.grid(row=1, column=0, sticky="nsew")
-
-        # ==========================================
-        # 3. SEÇÃO BASE: GRADE CENTRAL DE CARDS OPERACIONAIS
-        # ==========================================
-        self.cards_frame = tk.Frame(self.main_container, bg=COLORS["bg_dark"], bd=0, highlightthickness=0)
-        self.cards_frame.grid(row=2, column=0, sticky="s", pady=(0, 64))
-
-        # Criar os 3 NavCards centralizados horizontalmente
-        # 1. Alinhamento Truck
+        # 5. NavCards Flutuantes Individuais (SEM container escuro por trás)
         self.card_truck = NavCard(
-            self.cards_frame,
-            title="Alinhamento Truck",
+            self.canvas,
+            title="Alinhamento",
             icon_name="truck",
             command=lambda: self.router.navigate("trucks"),
             width=220,
             height=120
         )
-        self.card_truck.pack(side="left", padx=16)
+        self.card_truck_window = self.canvas.create_window(388, 600, window=self.card_truck, anchor="s")
 
-        # 2. Histórico
         self.card_history = NavCard(
-            self.cards_frame,
+            self.canvas,
             title="Histórico",
             icon_name="file_text",
             command=lambda: self.router.navigate("attendances"),
             width=220,
             height=120
         )
-        self.card_history.pack(side="left", padx=16)
+        self.card_history_window = self.canvas.create_window(640, 600, window=self.card_history, anchor="s")
 
-        # 3. Clientes
         self.card_clients = NavCard(
-            self.cards_frame,
+            self.canvas,
             title="Clientes",
             icon_name="users",
             command=lambda: self.router.navigate("clientes.index"),
             width=220,
             height=120
         )
-        self.card_clients.pack(side="left", padx=16)
+        self.card_clients_window = self.canvas.create_window(892, 600, window=self.card_clients, anchor="s")
+
+        # Evento de Redimensionamento para ajustar layout e imagem de fundo
+        self.canvas.bind("<Configure>", self._on_resize)
+
+        # Iniciar Relógio Digital
+        self._update_clock()
 
     def _update_clock(self):
-        """Atualiza o relógio digital gigante (HH:mm) a cada segundo."""
+        """Atualiza o relógio digital gigante (HH:mm) transparente no Canvas."""
         current_time = time.strftime("%H:%M")
-        self.lbl_clock.config(text=current_time)
+        self.canvas.itemconfig(self.clock_text_id, text=current_time)
         self.clock_after_id = self.after(1000, self._update_clock)
 
     def _show_settings_menu(self):
@@ -188,11 +150,13 @@ class DashboardView(tk.Frame):
         )
         if file_path:
             state.custom_bg_path = file_path
+            save_user_settings({"custom_bg_path": file_path})
             self._apply_background()
 
     def _remove_background_image(self):
         """Restaura o fundo escuro padrão (#111520)."""
         state.custom_bg_path = None
+        save_user_settings({"custom_bg_path": None})
         if self.bg_image_id:
             self.canvas.delete(self.bg_image_id)
             self.bg_image_id = None
@@ -229,9 +193,19 @@ class DashboardView(tk.Frame):
             self.canvas.configure(bg=COLORS["bg_dark"])
 
     def _on_resize(self, event):
-        """Atualiza dinamicamente as dimensões do container e da imagem de fundo ao redimensionar."""
+        """Atualiza dinamicamente o posicionamento de cada elemento flutuante ao redimensionar."""
         w, h = event.width, event.height
-        self.canvas.itemconfig(self.container_window, width=w, height=h)
+
+        # Posições do Relógio e Botões no topo direito
+        self.canvas.coords(self.btn_logout_window, w - 36, 24)
+        self.canvas.coords(self.btn_settings_window, w - 120, 24)
+        self.canvas.coords(self.clock_text_id, w - 36, 95)
+
+        # Posições dos 3 Cards flutuantes na base
+        self.canvas.coords(self.card_truck_window, w / 2 - 252, h - 48)
+        self.canvas.coords(self.card_history_window, w / 2, h - 48)
+        self.canvas.coords(self.card_clients_window, w / 2 + 252, h - 48)
+
         self._apply_background()
 
     def destroy(self):

@@ -10,6 +10,7 @@ from app.config.settings import COLORS, FONTS
 from app.services.truck_service import TruckService
 from app.components.alignment_header import AlignmentHeader
 from app.utils.icons import create_icon_image
+from app.utils.scroll_helper import setup_canvas_scrolling
 
 class MarcasView(tk.Frame):
     def __init__(self, parent: tk.Widget, router, kwargs=None):
@@ -64,9 +65,9 @@ class MarcasView(tk.Frame):
             fg="#FFFFFF",
             insertbackground="white",
             bd=0,
-            font=("Segoe UI", 10)
+            font=("Segoe UI", 11)
         )
-        self.entry_search.pack(side="left", fill="x", expand=True)
+        self.entry_search.pack(side="left", fill="x", expand=True, ipady=4)
 
         self.entry_search.insert(0, "Buscar por nome ou código da marca...")
         self.entry_search.config(fg="#8a94a6")
@@ -122,6 +123,8 @@ class MarcasView(tk.Frame):
         self.list_window = self.list_canvas.create_window((0, 0), window=self.list_inner, anchor="nw")
 
         self.list_canvas.bind("<Configure>", lambda e: self.list_canvas.itemconfig(self.list_window, width=e.width))
+        self.list_inner.bind("<Configure>", lambda e: self.list_canvas.configure(scrollregion=self.list_canvas.bbox("all")))
+        setup_canvas_scrolling(self.list_canvas, self.list_inner)
 
     def _load_data(self):
         self.all_brands = TruckService.get_brands_summary()

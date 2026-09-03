@@ -36,14 +36,31 @@ class SelectAxleModal(tk.Frame):
         )
         modal.place(relx=0.5, rely=0.5, anchor="center")
 
+        hdr = tk.Frame(modal, bg="#0d1117")
+        hdr.pack(fill="x", pady=(0, 16))
+
         lbl_title = tk.Label(
-            modal,
+            hdr,
             text="SELECIONE O EIXO PARA MEDIÇÃO",
             font=("Segoe UI", 14, "bold"),
             fg="#FFFFFF",
             bg="#0d1117"
         )
-        lbl_title.pack(anchor="w", pady=(0, 16))
+        lbl_title.pack(side="left")
+
+        btn_close_x = tk.Button(
+            hdr,
+            text=" ✕ ",
+            font=("Segoe UI", 12, "bold"),
+            fg="#9ca3af",
+            bg="#0d1117",
+            activebackground="#ef4444",
+            activeforeground="white",
+            bd=0,
+            cursor="hand2",
+            command=self._close_modal
+        )
+        btn_close_x.pack(side="right")
 
         # Lista de Eixos Clicáveis
         axles_box = tk.Frame(modal, bg="#0d1117")
@@ -95,7 +112,7 @@ class SelectAxleModal(tk.Frame):
             padx=18,
             pady=8,
             cursor="hand2",
-            command=self.on_close
+            command=self._close_modal
         )
         btn_cancel.pack(side="right", padx=(8, 0))
 
@@ -136,4 +153,12 @@ class SelectAxleModal(tk.Frame):
 
         if item and self.on_select:
             self.on_select(item)
+        self.destroy()
+
+    def _close_modal(self):
+        if self.on_close:
+            try:
+                self.on_close()
+            except Exception:
+                pass
         self.destroy()

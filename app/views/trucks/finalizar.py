@@ -13,6 +13,7 @@ from app.config.settings import COLORS
 from app.services.client_service import ClientService
 from app.components.alignment_header import AlignmentHeader
 from app.utils.icons import create_icon_image
+from app.utils.scroll_helper import setup_canvas_scrolling
 
 ESTADOS_BRASIL = [
     "AC", "AL", "AP", "AM", "BA", "CE", "DF", "ES", "GO", "MA", "MT", "MS", "MG",
@@ -169,6 +170,8 @@ class TrucksFinalizarView(tk.Frame):
         self.scroll_canvas.create_window((0, 0), window=self.scroll_inner, anchor="nw")
 
         self.scroll_canvas.bind("<Configure>", lambda e: self.scroll_canvas.itemconfig(self.scroll_canvas.find_withtag("all")[0], width=e.width))
+        self.scroll_inner.bind("<Configure>", lambda e: self.scroll_canvas.configure(scrollregion=self.scroll_canvas.bbox("all")))
+        setup_canvas_scrolling(self.scroll_canvas, self.scroll_inner)
 
         # Box Central max-w-4xl
         self.center_box = tk.Frame(self.scroll_inner, bg="#1c2230")
@@ -405,6 +408,7 @@ class TrucksFinalizarView(tk.Frame):
             "client": self.selected_client,
             "tecnico": self.var_tecnico.get(),
             "observacoes": self.txt_obs.get("1.0", tk.END).strip(),
+            "alignment_mode": getattr(self, "alignment_mode", "MANUAL"),
             "units": [
                 {
                     "type": self.composition_units[idx]["type"],

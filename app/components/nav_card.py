@@ -85,7 +85,10 @@ class NavCard(tk.Canvas):
         x1, y1 = pad, pad
         x2, y2 = w - pad, h - pad
 
-        # Desenhar retângulo arredondado (Background + Border)
+        # Ajustar a cor de fundo do próprio canvas do card para bater com a cor do card
+        self.config(bg=bg_color)
+
+        # Desenhar retângulo do Card (Background + Border)
         self._create_rounded_rect(x1, y1, x2, y2, radius, fill=bg_color, outline=border_color, width=2)
 
         # Desenhar Ícone centralizado no topo (y = h * 0.38)

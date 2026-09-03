@@ -11,6 +11,7 @@ from app.services.client_service import ClientService
 from app.components.client_form import ClientForm
 from app.components.client_attendance_history import ClientAttendanceHistory
 from app.utils.icons import create_icon_image
+from app.utils.scroll_helper import setup_canvas_scrolling
 
 class ClientEditView(tk.Frame):
     def __init__(self, parent: tk.Widget, router, kwargs=None):
@@ -66,6 +67,8 @@ class ClientEditView(tk.Frame):
         self.canvas.create_window((0, 0), window=self.scroll_frame, anchor="nw")
 
         self.canvas.bind("<Configure>", lambda e: self.canvas.itemconfig(self.canvas.find_withtag("all")[0], width=e.width))
+        self.scroll_frame.bind("<Configure>", lambda e: self.canvas.configure(scrollregion=self.canvas.bbox("all")))
+        setup_canvas_scrolling(self.canvas, self.scroll_frame)
 
         # 1. Formulário Reutilizável ClientForm
         self.form = ClientForm(

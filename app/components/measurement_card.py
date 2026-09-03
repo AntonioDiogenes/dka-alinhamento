@@ -18,6 +18,7 @@ class MeasurementCard(tk.Frame):
         unit: str = "mm",
         step: float = 0.01,
         on_change: Optional[Callable[[float], None]] = None,
+        read_only: bool = False,
         **kwargs
     ):
         super().__init__(
@@ -37,6 +38,7 @@ class MeasurementCard(tk.Frame):
         self.unit = unit
         self.step = step
         self.on_change = on_change
+        self.read_only = read_only
         self.is_editing = False
 
         self._build_ui()
@@ -57,7 +59,7 @@ class MeasurementCard(tk.Frame):
         box.pack(expand=True, fill="x", pady=(4, 0))
 
         # Botão Decrementar (<)
-        btn_dec = tk.Button(
+        self.btn_dec = tk.Button(
             box,
             text="‹",
             font=("Segoe UI", 16, "bold"),
@@ -70,7 +72,7 @@ class MeasurementCard(tk.Frame):
             cursor="hand2",
             command=self._decrement
         )
-        btn_dec.pack(side="left")
+        self.btn_dec.pack(side="left")
 
         # Label/Entry Central de Valor
         self.lbl_value = tk.Label(
@@ -97,7 +99,7 @@ class MeasurementCard(tk.Frame):
         self.entry_value.bind("<FocusOut>", self._save_entry)
 
         # Botão Incrementar (>)
-        btn_inc = tk.Button(
+        self.btn_inc = tk.Button(
             box,
             text="›",
             font=("Segoe UI", 16, "bold"),
@@ -110,28 +112,38 @@ class MeasurementCard(tk.Frame):
             cursor="hand2",
             command=self._increment
         )
-        btn_inc.pack(side="right")
+        self.btn_inc.pack(side="right")
 
     def _format_value(self) -> str:
         prefix = "+" if self.value >= 0 else ""
         return f"{prefix}{self.value:.2f} {self.unit}".replace(".", ",")
+
+    def set_read_only(self, read_only: bool):
+        self.read_only = read_only
+        cursor = "default" if read_only else "hand2"
+        self.btn_dec.config(cursor=cursor)
+        self.btn_inc.config(cursor=cursor)
 
     def update_value(self, new_val: float):
         self.value = round(new_val, 2)
         self.lbl_value.config(text=self._format_value())
 
     def _decrement(self):
+        if self.read_only:
+            return
         self.update_value(self.value - self.step)
         if self.on_change:
             self.on_change(self.value)
 
     def _increment(self):
+        if self.read_only:
+            return
         self.update_value(self.value + self.step)
         if self.on_change:
             self.on_change(self.value)
 
     def _enable_entry(self, event=None):
-        if self.is_editing:
+        if self.read_only or self.is_editing:
             return
         self.is_editing = True
         self.lbl_value.pack_forget()

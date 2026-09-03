@@ -10,6 +10,7 @@ from app.config.settings import COLORS, FONTS
 from app.services.truck_service import TruckService
 from app.components.alignment_header import AlignmentHeader
 from app.utils.icons import create_icon_image
+from app.utils.scroll_helper import setup_canvas_scrolling
 
 class ModelosView(tk.Frame):
     def __init__(self, parent: tk.Widget, router, kwargs=None):
@@ -65,9 +66,9 @@ class ModelosView(tk.Frame):
             fg="#FFFFFF",
             insertbackground="white",
             bd=0,
-            font=("Segoe UI", 10)
+            font=("Segoe UI", 11)
         )
-        self.entry_search.pack(side="left", fill="x", expand=True)
+        self.entry_search.pack(side="left", fill="x", expand=True, ipady=4)
 
         self.entry_search.insert(0, "Buscar modelo, código ou fabricante...")
         self.entry_search.config(fg="#8a94a6")
@@ -99,21 +100,37 @@ class ModelosView(tk.Frame):
 
         # Filtro por Marca / Fabricante
         self.var_mfg = tk.StringVar(value="Todos os fabricantes")
-        self.om_mfg = tk.OptionMenu(self.toolbar, self.var_mfg, "Todos os fabricantes", command=lambda val: self._apply_filters())
-        self.om_mfg.config(
-            bg="#0d1117",
+
+        def _show_mfg_menu():
+            menu = tk.Menu(self, tearoff=0, bg="#1c2230", fg="white", activebackground="#4f77ff", font=("Segoe UI", 10))
+            for mfg in self.manufacturers:
+                def make_cmd(val=mfg):
+                    self.var_mfg.set(val)
+                    self.btn_mfg.config(text=f" {val}  ▾ ")
+                    self._apply_filters()
+                menu.add_command(label=f"  {mfg}  ", command=make_cmd)
+            x = self.btn_mfg.winfo_rootx()
+            y = self.btn_mfg.winfo_rooty() + self.btn_mfg.winfo_height() + 2
+            menu.post(x, y)
+
+        self.btn_mfg = tk.Button(
+            self.toolbar,
+            text=f" {self.var_mfg.get()}  ▾ ",
+            font=("Segoe UI", 10, "bold"),
             fg="#FFFFFF",
+            bg="#0d1117",
             activebackground="#1c2230",
             activeforeground="white",
             bd=1,
+            relief="solid",
             highlightbackground="#2a3245",
             highlightthickness=1,
-            font=("Segoe UI", 10),
             padx=14,
-            pady=4
+            pady=5,
+            cursor="hand2",
+            command=_show_mfg_menu
         )
-        self.om_mfg["menu"].config(bg="#1c2230", fg="white", activebackground="#4f77ff")
-        self.om_mfg.pack(side="left")
+        self.btn_mfg.pack(side="left")
 
         # 3. CONTAINER DA TABELA DE MODELOS
         self.table_card = tk.Frame(self, bg="#1a1f2e", highlightbackground="#2a3245", highlightthickness=1)
@@ -145,21 +162,18 @@ class ModelosView(tk.Frame):
         self.list_window = self.list_canvas.create_window((0, 0), window=self.list_inner, anchor="nw")
 
         self.list_canvas.bind("<Configure>", lambda e: self.list_canvas.itemconfig(self.list_window, width=e.width))
+        self.list_inner.bind("<Configure>", lambda e: self.list_canvas.configure(scrollregion=self.list_canvas.bbox("all")))
+        setup_canvas_scrolling(self.list_canvas, self.list_inner)
 
     def _load_data(self):
         self.all_trucks = TruckService.get_all_trucks()
         self.manufacturers = TruckService.get_manufacturers()
-
-        # Atualizar opções do OptionMenu
-        menu = self.om_mfg["menu"]
-        menu.delete(0, "end")
-        for m in self.manufacturers:
-            menu.add_command(label=m, command=lambda value=m: self._on_mfg_selected(value))
-
         self._apply_filters()
 
     def _on_mfg_selected(self, val: str):
         self.var_mfg.set(val)
+        self.btn_mfg.config(text=f" {val}  ▾ ")
+        self._apply_filters()
         self._apply_filters()
 
     def _clear_search(self):

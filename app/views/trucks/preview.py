@@ -20,6 +20,7 @@ from app.components.alignment_header import AlignmentHeader
 from app.utils.icons import create_icon_image
 from app.utils.pdf_generator import generate_alignment_pdf, get_downloads_directory
 from app.services.attendance_service import AttendanceService
+from app.utils.scroll_helper import setup_canvas_scrolling
 
 class TrucksPreviewView(tk.Frame):
     def __init__(self, parent: tk.Widget, router, kwargs=None):
@@ -85,6 +86,8 @@ class TrucksPreviewView(tk.Frame):
         sheet = tk.Frame(pdf_canvas, bg="#ffffff", padx=32, pady=28, highlightbackground="#e2e8f0", highlightthickness=1)
         pdf_canvas.create_window((0, 0), window=sheet, anchor="nw")
         pdf_canvas.bind("<Configure>", lambda e: pdf_canvas.itemconfig(pdf_canvas.find_withtag("all")[0], width=e.width))
+        sheet.bind("<Configure>", lambda e: pdf_canvas.configure(scrollregion=pdf_canvas.bbox("all")))
+        setup_canvas_scrolling(pdf_canvas, sheet)
 
         # CONTEÚDO IMPRESSO DO PDF
         client = self.final_data["client"]
@@ -106,8 +109,20 @@ class TrucksPreviewView(tk.Frame):
         s1 = tk.Frame(sheet, bg="#f8fafc", highlightbackground="#e2e8f0", highlightthickness=1, padx=16, pady=12)
         s1.pack(fill="x", pady=(0, 16))
 
+        alignment_mode = self.final_data.get("alignment_mode", "MANUAL")
+        if alignment_mode == "MANUAL":
+            mode_text = "TIPO DE ALINHAMENTO: AJUSTE MANUAL (SEM SENSORES CONECTADOS)"
+            mode_color = "#d97706"
+        elif alignment_mode == "SENSOR_OVERRIDE":
+            mode_text = "TIPO DE ALINHAMENTO: AJUSTE COM SENSOR (SOBRESCRIÇÃO MANUAL ATIVADA)"
+            mode_color = "#0284c7"
+        else:
+            mode_text = "TIPO DE ALINHAMENTO: LEITURA AUTOMÁTICA DE SENSORES DKA (TCP 5000)"
+            mode_color = "#059669"
+
         tk.Label(s1, text=f"CLIENTE: {client_name}   |   CPF/CNPJ: {client_doc}", font=("Segoe UI", 10, "bold"), fg="#0f172a", bg="#f8fafc").pack(anchor="w")
-        tk.Label(s1, text=f"LOCALIDADE: {cidade_uf}   |   TÉCNICO: {self.final_data['tecnico']}", font=("Segoe UI", 9), fg="#475569", bg="#f8fafc").pack(anchor="w", pady=(2, 0))
+        tk.Label(s1, text=f"LOCALIDADE: {cidade_uf}   |   TÉCNICO: {self.final_data['tecnico']}", font=("Segoe UI", 9), fg="#475569", bg="#f8fafc").pack(anchor="w", pady=(2, 2))
+        tk.Label(s1, text=mode_text, font=("Segoe UI", 9, "bold"), fg=mode_color, bg="#f8fafc").pack(anchor="w")
 
         # Seção 2: Tabela de Veículos da Composição (Grid Unificado com Colunas Retas)
         tk.Label(sheet, text="COMPOSIÇÃO VEICULAR", font=("Segoe UI", 10, "bold"), fg="#0f172a", bg="#ffffff").pack(anchor="w", pady=(0, 6))

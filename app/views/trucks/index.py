@@ -42,7 +42,7 @@ class TrucksIndexView(tk.Frame):
         self.header = AlignmentHeader(
             self,
             title="Alinhamento",
-            subtitle="Selecione o truck",
+            subtitle="Selecione o veículo",
             on_back=lambda: self.router.navigate("dashboard"),
             on_close=lambda: self.router.navigate("dashboard")
         )
@@ -63,8 +63,8 @@ class TrucksIndexView(tk.Frame):
             bg="#0d1117",
             highlightbackground="#2a3245",
             highlightthickness=1,
-            padx=10,
-            pady=6
+            padx=12,
+            pady=8
         )
         self.search_box.pack(side="left", fill="x", expand=True, padx=(0, 16))
 
@@ -79,9 +79,9 @@ class TrucksIndexView(tk.Frame):
             fg="#FFFFFF",
             insertbackground="white",
             bd=0,
-            font=("Segoe UI", 10)
+            font=("Segoe UI", 11)
         )
-        self.entry_search.pack(side="left", fill="x", expand=True)
+        self.entry_search.pack(side="left", fill="x", expand=True, ipady=4)
 
         # Placeholder
         self.entry_search.insert(0, "Procurar modelo...")
@@ -115,21 +115,37 @@ class TrucksIndexView(tk.Frame):
 
         # Colunas 5 a 8: Filtro Seleção de Fabricante
         self.var_mfg = tk.StringVar(value="Todos os fabricantes")
-        self.om_mfg = tk.OptionMenu(self.toolbar, self.var_mfg, *self.manufacturers, command=lambda val: self._on_filter_changed())
-        self.om_mfg.config(
-            bg="#0d1117",
+
+        def _show_mfg_menu():
+            menu = tk.Menu(self, tearoff=0, bg="#1c2230", fg="white", activebackground="#4f77ff", font=("Segoe UI", 10))
+            for mfg in self.manufacturers:
+                def make_cmd(val=mfg):
+                    self.var_mfg.set(val)
+                    self.btn_mfg.config(text=f" {val}  ▾ ")
+                    self._on_filter_changed()
+                menu.add_command(label=f"  {mfg}  ", command=make_cmd)
+            x = self.btn_mfg.winfo_rootx()
+            y = self.btn_mfg.winfo_rooty() + self.btn_mfg.winfo_height() + 2
+            menu.post(x, y)
+
+        self.btn_mfg = tk.Button(
+            self.toolbar,
+            text=f" {self.var_mfg.get()}  ▾ ",
+            font=("Segoe UI", 10, "bold"),
             fg="#FFFFFF",
+            bg="#0d1117",
             activebackground="#1c2230",
             activeforeground="white",
             bd=1,
+            relief="solid",
             highlightbackground="#2a3245",
             highlightthickness=1,
-            font=("Segoe UI", 10),
             padx=14,
-            pady=4
+            pady=5,
+            cursor="hand2",
+            command=_show_mfg_menu
         )
-        self.om_mfg["menu"].config(bg="#1c2230", fg="white", activebackground="#4f77ff")
-        self.om_mfg.pack(side="left", padx=(0, 16))
+        self.btn_mfg.pack(side="left", padx=(0, 16))
 
         # ==========================================
         # 3. GRADE CENTRAL DE CAMINHÕES (3 COLUNAS)
@@ -245,7 +261,7 @@ class TrucksIndexView(tk.Frame):
 
             lbl_empty_msg = tk.Label(
                 empty_box,
-                text="Nenhum caminhão encontrado",
+                text="Nenhum veículo encontrado",
                 font=("Segoe UI", 13, "bold"),
                 fg="#FFFFFF",
                 bg="#111520"
