@@ -120,7 +120,7 @@ class MeasurementCard(tk.Frame):
 
     def set_read_only(self, read_only: bool):
         self.read_only = read_only
-        cursor = "default" if read_only else "hand2"
+        cursor = "arrow" if read_only else "hand2"
         self.btn_dec.config(cursor=cursor)
         self.btn_inc.config(cursor=cursor)
 
