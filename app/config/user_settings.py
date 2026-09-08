@@ -29,3 +29,13 @@ def save_user_settings(settings: Dict[str, Any]) -> bool:
     except Exception as e:
         print("Erro ao salvar configurações do usuário:", e)
         return False
+
+
+def get_serial_key() -> str:
+    """Retorna a chave serial salva localmente, ou string vazia se não houver."""
+    return load_user_settings().get("serial_key", "")
+
+
+def set_serial_key(key: str) -> bool:
+    """Persiste a chave serial nas configurações do usuário."""
+    return save_user_settings({"serial_key": key.strip()})

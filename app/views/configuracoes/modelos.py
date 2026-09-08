@@ -2,6 +2,7 @@
 Tela de Gerenciamento e Edição de Modelos de Veículos (views/configuracoes/modelos.py).
 Permite visualizar, buscar, filtrar e editar modelos existentes. Não permite criar novos modelos.
 """
+import math
 import tkinter as tk
 from tkinter import messagebox
 from typing import List, Dict, Any
@@ -20,10 +21,15 @@ class ModelosView(tk.Frame):
         self.all_trucks: List[Dict[str, Any]] = []
         self.manufacturers: List[str] = []
         self.filtered_trucks: List[Dict[str, Any]] = []
+        self.page_size = 20
+        self.current_page = 1
+        self._search_after_id = None
 
         # Ícones
         self.img_search = create_icon_image("search", size=16, color="#8a94a6")
         self.img_clear = create_icon_image("x", size=14, color="#8a94a6")
+        self.img_prev = create_icon_image("chevron_left", size=16, color="#FFFFFF")
+        self.img_next = create_icon_image("chevron_right", size=16, color="#FFFFFF")
 
         self._build_ui()
         self._load_data()
@@ -83,9 +89,14 @@ class ModelosView(tk.Frame):
                 self.entry_search.insert(0, "Buscar modelo, código ou fabricante...")
                 self.entry_search.config(fg="#8a94a6")
 
+        def on_search_key(e):
+            if self._search_after_id:
+                self.after_cancel(self._search_after_id)
+            self._search_after_id = self.after(200, lambda: self._apply_filters(reset_page=True))
+
         self.entry_search.bind("<FocusIn>", on_focus_in)
         self.entry_search.bind("<FocusOut>", on_focus_out)
-        self.entry_search.bind("<KeyRelease>", lambda e: self._apply_filters())
+        self.entry_search.bind("<KeyRelease>", on_search_key)
 
         self.btn_clear = tk.Button(
             self.search_box,
@@ -134,7 +145,7 @@ class ModelosView(tk.Frame):
 
         # 3. CONTAINER DA TABELA DE MODELOS
         self.table_card = tk.Frame(self, bg="#1a1f2e", highlightbackground="#2a3245", highlightthickness=1)
-        self.table_card.pack(fill="both", expand=True, padx=32, pady=(0, 24))
+        self.table_card.pack(fill="both", expand=True, padx=32, pady=(0, 12))
 
         # Cabeçalho da Tabela
         self.th_frame = tk.Frame(self.table_card, bg="#111520", padx=16, pady=10)
@@ -165,7 +176,72 @@ class ModelosView(tk.Frame):
         self.list_inner.bind("<Configure>", lambda e: self.list_canvas.configure(scrollregion=self.list_canvas.bbox("all")))
         setup_canvas_scrolling(self.list_canvas, self.list_inner)
 
+        # 4. BARRA DE NAVEGAÇÃO DE PAGINAÇÃO
+        self.footer_container = tk.Frame(self, bg="#111520", padx=32, pady=8)
+        self.footer_container.pack(fill="x", side="bottom", pady=(0, 16))
+
+        self.lbl_counter = tk.Label(
+            self.footer_container,
+            text="Exibindo 0 registros",
+            font=("Segoe UI", 9),
+            fg="#9ca3af",
+            bg="#111520"
+        )
+        self.lbl_counter.pack(side="left")
+
+        self.nav_frame = tk.Frame(self.footer_container, bg="#111520")
+        self.nav_frame.pack(side="right")
+
+        self.btn_prev = tk.Button(
+            self.nav_frame,
+            image=self.img_prev,
+            bg="#1a1f2e",
+            activebackground="#2a3245",
+            bd=0,
+            padx=10,
+            pady=4,
+            cursor="hand2",
+            command=self._prev_page
+        )
+        self.btn_prev.pack(side="left", padx=4)
+
+        self.lbl_page_num = tk.Label(
+            self.nav_frame,
+            text="Página 1 de 1",
+            font=("Segoe UI", 9, "bold"),
+            fg="#FFFFFF",
+            bg="#111520",
+            padx=8
+        )
+        self.lbl_page_num.pack(side="left")
+
+        self.btn_next = tk.Button(
+            self.nav_frame,
+            image=self.img_next,
+            bg="#1a1f2e",
+            activebackground="#2a3245",
+            bd=0,
+            padx=10,
+            pady=4,
+            cursor="hand2",
+            command=self._next_page
+        )
+        self.btn_next.pack(side="left", padx=4)
+
+    def _show_loading(self, message: str = "Carregando modelos..."):
+        for child in self.list_inner.winfo_children():
+            child.destroy()
+        box = tk.Frame(self.list_inner, bg="#1a1f2e", pady=48)
+        box.pack(fill="x")
+        tk.Label(box, text="⏳", font=("Segoe UI", 28), bg="#1a1f2e").pack()
+        tk.Label(box, text=message, font=("Segoe UI", 11, "bold"), fg="#FFFFFF", bg="#1a1f2e").pack(pady=(12, 0))
+        self.list_inner.update_idletasks()
+
     def _load_data(self):
+        self._show_loading("Carregando catálogo de veículos...")
+        self.after(20, self._perform_load_data)
+
+    def _perform_load_data(self):
         self.all_trucks = TruckService.get_all_trucks()
         self.manufacturers = TruckService.get_manufacturers()
         self._apply_filters()
@@ -173,7 +249,6 @@ class ModelosView(tk.Frame):
     def _on_mfg_selected(self, val: str):
         self.var_mfg.set(val)
         self.btn_mfg.config(text=f" {val}  ▾ ")
-        self._apply_filters()
         self._apply_filters()
 
     def _clear_search(self):
@@ -183,7 +258,10 @@ class ModelosView(tk.Frame):
         self.var_mfg.set("Todos os fabricantes")
         self._apply_filters()
 
-    def _apply_filters(self):
+    def _apply_filters(self, reset_page: bool = True):
+        if reset_page:
+            self.current_page = 1
+
         q = self.entry_search.get().strip()
         if q == "Buscar modelo, código ou fabricante...":
             q = ""
@@ -200,13 +278,24 @@ class ModelosView(tk.Frame):
         for child in self.list_inner.winfo_children():
             child.destroy()
 
-        if not self.filtered_trucks:
+        total = len(self.filtered_trucks)
+
+        if total == 0:
             empty_box = tk.Frame(self.list_inner, bg="#1a1f2e", pady=40)
             empty_box.pack(fill="x")
             tk.Label(empty_box, text="Nenhum modelo encontrado.", font=("Segoe UI", 11), fg="#9ca3af", bg="#1a1f2e").pack()
+            self._update_pagination(0, 0, 0)
             return
 
-        for idx, truck in enumerate(self.filtered_trucks):
+        total_pages = math.ceil(total / self.page_size) or 1
+        if self.current_page > total_pages:
+            self.current_page = total_pages
+
+        start_idx = (self.current_page - 1) * self.page_size
+        end_idx = min(start_idx + self.page_size, total)
+        page_items = self.filtered_trucks[start_idx:end_idx]
+
+        for idx, truck in enumerate(page_items):
             bg_row = "#1c2230" if idx % 2 == 0 else "#161b26"
             row = tk.Frame(self.list_inner, bg=bg_row, padx=16, pady=8, highlightbackground="#2a3245", highlightthickness=1)
             row.pack(fill="x", pady=1)
@@ -257,6 +346,35 @@ class ModelosView(tk.Frame):
 
         self.list_inner.update_idletasks()
         self.list_canvas.config(scrollregion=(0, 0, self.list_inner.winfo_width(), self.list_inner.winfo_height()))
+        self.list_canvas.yview_moveto(0)
+
+        self._update_pagination(start_idx + 1, end_idx, total)
+
+    def _update_pagination(self, start: int, end: int, total: int):
+        if total == 0:
+            self.lbl_counter.config(text="Exibindo 0 registros")
+            self.lbl_page_num.config(text="Página 0 de 0")
+            self.btn_prev.config(state="disabled")
+            self.btn_next.config(state="disabled")
+        else:
+            total_pages = math.ceil(total / self.page_size)
+            self.lbl_counter.config(text=f"Exibindo {start} a {end} de {total} modelos")
+            self.lbl_page_num.config(text=f"Página {self.current_page} de {total_pages}")
+            self.btn_prev.config(state="normal" if self.current_page > 1 else "disabled")
+            self.btn_next.config(state="normal" if self.current_page < total_pages else "disabled")
+
+    def _prev_page(self):
+        if self.current_page > 1:
+            self.current_page -= 1
+            self._show_loading("Carregando página...")
+            self.after(20, self._render_table)
+
+    def _next_page(self):
+        total_pages = math.ceil(len(self.filtered_trucks) / self.page_size)
+        if self.current_page < total_pages:
+            self.current_page += 1
+            self._show_loading("Carregando página...")
+            self.after(20, self._render_table)
 
     def _open_edit_modal(self, truck: Dict[str, Any]):
         """Abre modal flutuante para editar dados do modelo."""

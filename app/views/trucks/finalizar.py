@@ -120,19 +120,23 @@ class TrucksFinalizarView(tk.Frame):
         self.kwargs = kwargs or {}
 
         # Unidades da Composição (Padrão 2 Unidades: Cavalo + Semirreboque)
-        self.composition_units = self.kwargs.get("units_data", [
-            {"id": 1, "type": "Cavalo Mecânico", "model": "VOLVO FH 540"},
-            {"id": 2, "type": "Semirreboque", "model": "Randon 3 Eixos"}
-        ])
+        units = self.kwargs.get("units_data") or self.kwargs.get("composition_units")
+        if not units:
+            units = [
+                {"id": 1, "type": "Cavalo Mecânico", "model": "VOLVO FH 540"},
+                {"id": 2, "type": "Semirreboque", "model": "Randon 3 Eixos"}
+            ]
+        self.composition_units = units
 
         # Estado do Cliente Selecionado
         self.selected_client: Optional[Dict[str, Any]] = ClientService.get_client_by_id(1)
 
         # Variáveis dos Veículos (Placa e KM)
         self.unit_vars = []
-        for u in self.composition_units:
-            v_placa = tk.StringVar(value="ABC1D23" if u["id"] == 1 else "DEF5678")
-            v_km = tk.StringVar(value="245000" if u["id"] == 1 else "120000")
+        for idx, u in enumerate(self.composition_units):
+            u_id = u.get("id", idx + 1)
+            v_placa = tk.StringVar(value=u.get("placa") or ("ABC1D23" if u_id == 1 else "DEF5678"))
+            v_km = tk.StringVar(value=u.get("km") or ("245000" if u_id == 1 else "120000"))
             v_placa.trace_add("write", lambda *args, v=v_placa: self._mask_placa(v))
             self.unit_vars.append({"placa": v_placa, "km": v_km})
 
@@ -157,7 +161,7 @@ class TrucksFinalizarView(tk.Frame):
             self,
             title="Finalizar Alinhamento",
             subtitle="Preencha as placas, vincule o proprietário e gere o relatório",
-            on_back=lambda: self.router.navigate("trucks.medidas"),
+            on_back=self._go_back_to_medidas,
             on_close=lambda: self.router.navigate("dashboard")
         )
         self.header.pack(fill="x", side="top")
@@ -192,7 +196,10 @@ class TrucksFinalizarView(tk.Frame):
             u_box = tk.Frame(card1, bg="#1c2230", highlightbackground="#2a3245", highlightthickness=1, padx=16, pady=14)
             u_box.pack(fill="x", pady=6)
 
-            title_str = f"UNIDADE {unit['id']} — {unit['type'].upper()} ({unit.get('model', 'Padrão')})"
+            u_id = unit.get("id", idx + 1)
+            u_type = unit.get("type", "Veículo")
+            u_model = unit.get("model") or unit.get("catalog", "Padrão")
+            title_str = f"UNIDADE {u_id} — {u_type.upper()} ({u_model})"
             tk.Label(u_box, text=title_str, font=("Segoe UI", 9, "bold"), fg="#60a5fa", bg="#1c2230").pack(anchor="w", pady=(0, 8))
 
             f_row = tk.Frame(u_box, bg="#1c2230")
@@ -273,8 +280,9 @@ class TrucksFinalizarView(tk.Frame):
             padx=20,
             pady=10,
             cursor="hand2",
-            command=lambda: self.router.navigate("trucks.medidas")
+            command=self._go_back_to_medidas
         )
+        btn_cancel.pack(side="left")
         btn_cancel.pack(side="left")
 
         btn_submit = tk.Button(
@@ -394,10 +402,13 @@ class TrucksFinalizarView(tk.Frame):
         self.selected_client = client
         self._render_client_state()
 
-    def _mask_placa(self, var: tk.StringVar):
-        raw = "".join(filter(str.isalnum, var.get())).upper()[:7]
-        if var.get() != raw:
-            var.set(raw)
+    def _go_back_to_medidas(self):
+        self.router.navigate(
+            "trucks.medidas",
+            units_data=self.composition_units,
+            composition_units=self.composition_units,
+            store=self.kwargs.get("store")
+        )
 
     def _submit_finalization(self):
         if not self.selected_client:
@@ -411,8 +422,9 @@ class TrucksFinalizarView(tk.Frame):
             "alignment_mode": getattr(self, "alignment_mode", "MANUAL"),
             "units": [
                 {
-                    "type": self.composition_units[idx]["type"],
-                    "model": self.composition_units[idx].get("model", "Padrão"),
+                    "id": self.composition_units[idx].get("id", idx + 1),
+                    "type": self.composition_units[idx].get("type", "Veículo"),
+                    "model": self.composition_units[idx].get("model") or self.composition_units[idx].get("catalog", "Padrão"),
                     "placa": self.unit_vars[idx]["placa"].get(),
                     "km": self.unit_vars[idx]["km"].get()
                 }

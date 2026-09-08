@@ -9,7 +9,6 @@ import os
 import sys
 import json
 import time
-import ssl
 import threading
 import subprocess
 import urllib.request
@@ -19,20 +18,14 @@ from pathlib import Path
 
 from app.config.version import CURRENT_VERSION, APP_NAME, VERSION_CHECK_URL
 from app.config.settings import COLORS, FONTS
+from app.config.user_settings import get_serial_key
+from app.services.license_service import validate_license, LicenseNetworkError
+from app.utils.http import urlopen_with_ssl as _urlopen_with_ssl_new
 
+# Alias para manter compatibilidade interna com chamadas que passam timeout como kwarg
 def _urlopen_with_ssl(req, timeout=None):
-    """Executa urlopen com validação SSL e faz fallback para unverified caso falhe no Windows/PyInstaller."""
-    try:
-        if timeout:
-            return urllib.request.urlopen(req, timeout=timeout)
-        return urllib.request.urlopen(req)
-    except Exception as e:
-        if "CERTIFICATE_VERIFY_FAILED" in str(e) or "certificate verify failed" in str(e):
-            ctx = ssl._create_unverified_context()
-            if timeout:
-                return urllib.request.urlopen(req, timeout=timeout, context=ctx)
-            return urllib.request.urlopen(req, context=ctx)
-        raise e
+    """Wrapper de compatibilidade — delega para utils.http.urlopen_with_ssl."""
+    return _urlopen_with_ssl_new(req, timeout=timeout or 10)
 
 
 # Suporte opcional ao Pystray para ícone na bandeja perto do relógio do Windows
@@ -142,6 +135,41 @@ class UpdateService:
     def _check_for_updates_thread(self):
         """Thread que faz a busca por atualizações no servidor."""
         start_time = time.time()
+
+        # ----------------------------------------------------------------
+        # 1. Validação de Licença — deve ocorrer antes de tudo
+        # ----------------------------------------------------------------
+        serial_key = get_serial_key()
+
+        if not serial_key:
+            # Nenhuma chave cadastrada → abre tela de ativação
+            self.root.after(0, self._open_license_view, "")
+            return
+
+        try:
+            license_result = validate_license(serial_key)
+        except LicenseNetworkError as exc:
+            # Falha de rede: permite acesso offline com aviso se já havia chave salva
+            license_result = None
+            license_network_error = str(exc)
+        else:
+            license_network_error = ""
+
+        if license_result is not None and not license_result.get("valid", False):
+            # Chave inválida, expirada, revogada, etc.
+            error_msg = license_result.get("message", "Licença inválida ou não autorizada.")
+            self.root.after(0, self._open_license_view, error_msg)
+            return
+
+        # Se houve erro de rede mas já havia uma chave salva, continua (modo offline).
+        # Você pode remover este bloco se preferir bloquear acesso offline.
+        if license_result is None:
+            # Aviso leve, não bloqueia — apenas loga
+            print(f"[LicenseService] Validação offline (erro de rede): {license_network_error}")
+
+        # ----------------------------------------------------------------
+        # 2. Checagem de atualizações (fluxo original)
+        # ----------------------------------------------------------------
         latest_version = None
         download_url = ""
         release_notes = ""
@@ -156,7 +184,7 @@ class UpdateService:
                 if response.status == 200:
                     data = json.loads(response.read().decode('utf-8'))
                     latest_version = data.get("version", "").strip()
-                    
+
                     if latest_version and self._is_newer_version(CURRENT_VERSION, latest_version):
                         has_update = True
                         download_url = self._get_platform_download_url(data)
@@ -176,6 +204,25 @@ class UpdateService:
             # Sistema já atualizado -> Atualiza o splash e abre a aplicação principal
             self.root.after(0, self._transition_to_main_app)
 
+    def _open_license_view(self, error_message: str):
+        """Fecha o splash e abre a tela de ativação de licença."""
+        if self.splash_window:
+            self.splash_window.destroy()
+            self.splash_window = None
+
+        from app.views.license_view import LicenseView
+        LicenseView(
+            self.root,
+            on_success=self._on_license_validated,
+            error_message=error_message,
+        )
+
+    def _on_license_validated(self):
+        """Chamado pela LicenseView após ativação bem-sucedida."""
+        # Após ativar a licença pela primeira vez, vai direto para o app.
+        if self.on_app_ready_callback:
+            self.on_app_ready_callback()
+
     def _transition_to_main_app(self):
         """Atualiza a mensagem de sucesso e exibe a aplicação principal."""
         if self.splash_status:
@@ -189,7 +236,7 @@ class UpdateService:
         if self.splash_window:
             self.splash_window.destroy()
             self.splash_window = None
-        
+
         if self.on_app_ready_callback:
             self.on_app_ready_callback()
 

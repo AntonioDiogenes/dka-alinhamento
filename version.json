@@ -1,7 +1,7 @@
 {
-  "version": "1.1.1",
-  "release_notes": "🚀 Versão 1.1.1:\n• Correção da reinicialização automática silenciosa no Windows via explorer.exe.\n• Busca por placa na listagem de clientes.\n• Alinhamento manual sem sensores e trava/destrava para sobrescrição manual.\n• Seleção de eixos no modal filtrada dinamicamente pela composição do veículo.\n• Fundo de tela personalizável e relógio transparente na Home.",
-  "download_url_win": "https://github.com/AntonioDiogenes/dka-alinhamento/releases/download/v1.1.1/DKA_Alinhamento-Windows-x64.exe",
-  "download_url_linux": "https://github.com/AntonioDiogenes/dka-alinhamento/releases/download/v1.1.1/DKA_Alinhamento-Linux-x64.tar.gz",
-  "download_url_mac": "https://github.com/AntonioDiogenes/dka-alinhamento/releases/download/v1.1.1/DKA_Alinhamento-macOS.zip"
+  "version": "1.1.2",
+  "release_notes": "🚀 Versão 1.1.2:\n• Validação obrigatória de chave serial de licença para acesso à aplicação desktop via API HTTP POST.\n• Exibição de tela modal de ativação de licença com feedback detalhado de validação e erros.",
+  "download_url_win": "https://github.com/AntonioDiogenes/dka-alinhamento/releases/download/v1.1.2/DKA_Alinhamento-Windows-x64.exe",
+  "download_url_linux": "https://github.com/AntonioDiogenes/dka-alinhamento/releases/download/v1.1.2/DKA_Alinhamento-Linux-x64.tar.gz",
+  "download_url_mac": "https://github.com/AntonioDiogenes/dka-alinhamento/releases/download/v1.1.2/DKA_Alinhamento-macOS.zip"
 }

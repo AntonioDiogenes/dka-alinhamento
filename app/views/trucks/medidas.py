@@ -162,10 +162,12 @@ class TrucksMedidasView(tk.Frame):
 
     def _on_advance_next(self):
         mode = self._get_alignment_mode()
+        units_data = self.kwargs.get("units_data") or self.kwargs.get("composition_units")
         self.router.navigate(
             "trucks.finalizar",
             store=self.measurements_store,
-            units_data=self.kwargs.get("units_data"),
+            units_data=units_data,
+            composition_units=units_data,
             alignment_mode=mode
         )
 

@@ -354,4 +354,8 @@ class TrucksSetupView(tk.Frame):
 
     def _advance_to_medicao(self):
         # Transiciona para a Tela 3: Medição Física de Eixos (medidas.py)
-        self.router.navigate("trucks.medidas", composition_units=self.units_data)
+        self.router.navigate(
+            "trucks.medidas",
+            units_data=self.units_data,
+            composition_units=self.units_data
+        )
