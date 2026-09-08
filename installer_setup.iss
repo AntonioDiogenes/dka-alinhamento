@@ -1,6 +1,6 @@
 ; Script de Criação de Instalador Windows com Inno Setup
 #define MyAppName "DKA Alinhamento de Veículos"
-#define MyAppVersion "1.0.0"
+#define MyAppVersion "1.1.3"
 #define MyAppPublisher "DKA Ferramentas"
 #define MyAppExeName "DKA_Alinhamento.exe"
 

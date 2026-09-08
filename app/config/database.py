@@ -5,6 +5,7 @@ Define a localização do arquivo .db (dka_ferramentas.db ou app.db).
 import os
 import sys
 import hashlib
+import shutil
 from pathlib import Path
 
 # Alternar para True se quiser usar o dka_ferramentas.db (MySQL) ou False para app.db (Banco Antigo Local)
@@ -29,16 +30,36 @@ def get_database_path() -> Path:
     """
     Retorna o caminho completo para o arquivo de banco de dados.
     Mudar a flag USE_MYSQL_EXPORTED_DB = True/False para alternar entre bancos.
+    Em modo empacotado (PyInstaller), se dka_ferramentas.db não existir no db_dir,
+    copia o banco completo embarcado no pacote para o diretório de dados persistente.
     """
     db_dir = get_database_dir()
     
     if USE_MYSQL_EXPORTED_DB:
-        # 1. Tenta dka_ferramentas.db no diretório database/
+        # 1. Tenta dka_ferramentas.db no diretório de dados do usuário (db_dir)
         dka_db = db_dir / "dka_ferramentas.db"
         if dka_db.exists():
             return dka_db
 
-        # 2. Tenta dka_ferramentas.db na raiz da aplicação
+        # 2. Se for modo congelado (PyInstaller) e dka_ferramentas.db ainda não existir no db_dir,
+        #    copia o banco empacotado (_MEIPASS ou diretório do executável) para o db_dir.
+        if getattr(sys, 'frozen', False):
+            meipass_dir = Path(getattr(sys, '_MEIPASS', Path(sys.executable).parent))
+            candidates = [
+                meipass_dir / "database" / "dka_ferramentas.db",
+                meipass_dir / "dka_ferramentas.db",
+                Path(sys.executable).parent / "database" / "dka_ferramentas.db",
+                Path(sys.executable).parent / "dka_ferramentas.db",
+            ]
+            for source in candidates:
+                if source.exists():
+                    try:
+                        shutil.copy2(source, dka_db)
+                        return dka_db
+                    except Exception:
+                        pass
+
+        # 3. Tenta dka_ferramentas.db na raiz da aplicação (modo dev)
         root_dka_db = db_dir.parent / "dka_ferramentas.db"
         if root_dka_db.exists():
             return root_dka_db

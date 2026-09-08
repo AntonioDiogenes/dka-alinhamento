@@ -1,7 +1,7 @@
 {
-  "version": "1.1.2",
-  "release_notes": "🚀 Versão 1.1.2:\n• Validação obrigatória de chave serial de licença para acesso à aplicação desktop via API HTTP POST.\n• Exibição de tela modal de ativação de licença com feedback detalhado de validação e erros.",
-  "download_url_win": "https://github.com/AntonioDiogenes/dka-alinhamento/releases/download/v1.1.2/DKA_Alinhamento-Windows-x64.exe",
-  "download_url_linux": "https://github.com/AntonioDiogenes/dka-alinhamento/releases/download/v1.1.2/DKA_Alinhamento-Linux-x64.tar.gz",
-  "download_url_mac": "https://github.com/AntonioDiogenes/dka-alinhamento/releases/download/v1.1.2/DKA_Alinhamento-macOS.zip"
+  "version": "1.1.3",
+  "release_notes": "🚀 Versão 1.1.3:\n• Correção da inclusão do banco de dados completo (dka_ferramentas.db) no executável compilado com suporte a todas as 3.496 marcas e modelos.",
+  "download_url_win": "https://github.com/AntonioDiogenes/dka-alinhamento/releases/download/v1.1.3/DKA_Alinhamento-Windows-x64.exe",
+  "download_url_linux": "https://github.com/AntonioDiogenes/dka-alinhamento/releases/download/v1.1.3/DKA_Alinhamento-Linux-x64.tar.gz",
+  "download_url_mac": "https://github.com/AntonioDiogenes/dka-alinhamento/releases/download/v1.1.3/DKA_Alinhamento-macOS.zip"
 }
