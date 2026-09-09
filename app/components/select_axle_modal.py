@@ -4,6 +4,7 @@ Permite alternar interativamente o eixo em medição ativa.
 """
 import tkinter as tk
 from typing import List, Dict, Any, Callable
+from app.utils.scroll_helper import setup_canvas_scrolling
 
 class SelectAxleModal(tk.Frame):
     def __init__(
@@ -31,18 +32,18 @@ class SelectAxleModal(tk.Frame):
             bg="#0d1117",
             highlightbackground="#2a3245",
             highlightthickness=1,
-            padx=32,
-            pady=28
+            padx=24,
+            pady=20
         )
         modal.place(relx=0.5, rely=0.5, anchor="center")
 
         hdr = tk.Frame(modal, bg="#0d1117")
-        hdr.pack(fill="x", pady=(0, 16))
+        hdr.pack(fill="x", pady=(0, 14))
 
         lbl_title = tk.Label(
             hdr,
             text="SELECIONE O EIXO PARA MEDIÇÃO",
-            font=("Segoe UI", 14, "bold"),
+            font=("Segoe UI", 12, "bold"),
             fg="#FFFFFF",
             bg="#0d1117"
         )
@@ -62,9 +63,20 @@ class SelectAxleModal(tk.Frame):
         )
         btn_close_x.pack(side="right")
 
-        # Lista de Eixos Clicáveis
-        axles_box = tk.Frame(modal, bg="#0d1117")
-        axles_box.pack(fill="x", pady=(0, 24))
+        # Lista de Eixos Clicáveis (Rolável se mais de 4 eixos)
+        num_axles = len(self.axles_list)
+        if num_axles > 4:
+            canvas_h = 240
+            axles_canvas = tk.Canvas(modal, bg="#0d1117", height=canvas_h, highlightthickness=0, bd=0)
+            axles_canvas.pack(fill="x", pady=(0, 16))
+            axles_box = tk.Frame(axles_canvas, bg="#0d1117")
+            axles_canvas.create_window((0, 0), window=axles_box, anchor="nw")
+            axles_canvas.bind("<Configure>", lambda e: axles_canvas.itemconfig(axles_canvas.find_withtag("all")[0], width=e.width))
+            axles_box.bind("<Configure>", lambda e: axles_canvas.configure(scrollregion=axles_canvas.bbox("all")))
+            setup_canvas_scrolling(axles_canvas, axles_box)
+        else:
+            axles_box = tk.Frame(modal, bg="#0d1117")
+            axles_box.pack(fill="x", pady=(0, 16))
 
         self.axle_buttons = {}
 
@@ -89,12 +101,12 @@ class SelectAxleModal(tk.Frame):
                 bd=1,
                 highlightbackground=border_col,
                 highlightthickness=1,
-                padx=16,
-                pady=10,
+                padx=14,
+                pady=8,
                 cursor="hand2",
                 command=lambda a_item=item: self._select_axle(a_item)
             )
-            btn.pack(fill="x", pady=4)
+            btn.pack(fill="x", pady=3)
             self.axle_buttons[axle_id] = btn
 
         # Botão Confirmar Seleção e Cancelar

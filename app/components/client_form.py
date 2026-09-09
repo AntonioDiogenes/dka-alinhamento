@@ -64,9 +64,20 @@ class ClientForm(tk.Frame):
 
         self.var_ativo = tk.BooleanVar(value=self.client_data.get("ativo", True))
 
-        # Formatação dinâmica de máscara CPF/CNPJ
+        # Formatação dinâmica de máscara CPF/CNPJ, Celular, Telefone Fixo e CEP
         self.var_cpf_cnpj.trace_add("write", self._mask_cpf_cnpj)
         self.var_celular.trace_add("write", self._mask_celular)
+        self.var_telefone.trace_add("write", self._mask_telefone_fixo)
+        self.var_cep.trace_add("write", self._mask_cep)
+
+        if self.var_cpf_cnpj.get():
+            self._mask_cpf_cnpj()
+        if self.var_celular.get():
+            self._mask_celular()
+        if self.var_telefone.get():
+            self._mask_telefone_fixo()
+        if self.var_cep.get():
+            self._mask_cep()
 
         self._build_form()
 
@@ -271,6 +282,28 @@ class ClientForm(tk.Frame):
 
         if self.var_celular.get() != formatted:
             self.var_celular.set(formatted)
+
+    def _mask_telefone_fixo(self, *args):
+        raw = "".join(filter(str.isdigit, self.var_telefone.get()))[:10]
+        formatted = raw
+        if len(raw) > 0:
+            formatted = "(" + raw
+        if len(raw) > 2:
+            formatted = "(" + raw[:2] + ") " + raw[2:]
+        if len(raw) > 6:
+            formatted = "(" + raw[:2] + ") " + raw[2:6] + "-" + raw[6:]
+
+        if self.var_telefone.get() != formatted:
+            self.var_telefone.set(formatted)
+
+    def _mask_cep(self, *args):
+        raw = "".join(filter(str.isdigit, self.var_cep.get()))[:8]
+        formatted = raw
+        if len(raw) > 5:
+            formatted = raw[:5] + "-" + raw[5:]
+
+        if self.var_cep.get() != formatted:
+            self.var_cep.set(formatted)
 
     def _handle_save(self):
         nome = self.var_nome.get().strip()

@@ -7,6 +7,7 @@ Responsabilidades:
 """
 import json
 import urllib.request
+from app.utils.hardware import get_hardware_id
 from app.utils.http import urlopen_with_ssl
 
 VALIDATE_URL = "https://dka.cea.eti.br/api/licenses/validate"
@@ -17,7 +18,7 @@ class LicenseNetworkError(Exception):
     """Erro de rede/HTTP ao tentar validar a licença."""
 
 
-def validate_license(serial_key: str) -> dict:
+def validate_license(serial_key: str, hardware_id: str | None = None) -> dict:
     """
     Valida a chave serial contra o servidor de licenças.
 
@@ -32,9 +33,12 @@ def validate_license(serial_key: str) -> dict:
     Lança:
         LicenseNetworkError — se houver falha de rede, timeout ou status HTTP != 200.
     """
+    hw_id = hardware_id or get_hardware_id()
+
     payload = json.dumps({
         "serial_key": serial_key.strip(),
         "product": PRODUCT_NAME,
+        "hardware_id": hw_id,
     }).encode("utf-8")
 
     req = urllib.request.Request(
