@@ -59,8 +59,8 @@ jobs:
 
     - name: Instalar Dependências do Sistema (Tkinter / X11)
       run: |
-        sudo apt-get update
-        sudo apt-get install -y python3-tk libtk8.6 libsqlite3-dev
+        sudo apt-get update -o Acquire::Retries=3 -o Acquire::http::No-Cache=true -o Acquire::BrokenProxy=true || true
+        sudo apt-get install -y --fix-missing python3-tk libtk8.6 libsqlite3-dev
 
     - name: Configurar Python 3.11
       uses: actions/setup-python@v5
