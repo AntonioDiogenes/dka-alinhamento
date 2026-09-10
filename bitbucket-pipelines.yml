@@ -1,13 +1,17 @@
 # Bitbucket Pipelines - DKA Alinhamento
 # Gera builds automáticas em paralelo para Linux (.tar.gz) e Windows (.exe)
+# e publica automaticamente os artefatos e o version.json no repositório público dka-desktop
 
 image: python:3.11
+
+options:
+  max-time: 30
 
 pipelines:
   default:
     - parallel:
         - step:
-            name: Build Linux (x86_64)
+            name: Build & Deploy Linux (x86_64)
             caches:
               - pip
             script:
@@ -18,17 +22,42 @@ pipelines:
               - pyinstaller --noconfirm DKA_Alinhamento.spec
               - chmod +x dist/DKA_Alinhamento
               - tar -czf dist/DKA_Alinhamento-Linux-x64.tar.gz -C dist DKA_Alinhamento
+              # Envia o pacote Linux e o version.json para o repositório público dka-desktop
+              - |
+                AUTH_USER="${BITBUCKET_USERNAME:-AntonioDiogenes}"
+                AUTH_PASS="${BITBUCKET_APP_PASSWORD}"
+                if [ -n "$AUTH_PASS" ]; then
+                  curl -s -X POST "https://api.bitbucket.org/2.0/repositories/cristofoleti_renato/dka-desktop/downloads" --user "${AUTH_USER}:${AUTH_PASS}" -F files=@dist/DKA_Alinhamento-Linux-x64.tar.gz || true
+                  curl -s -X POST "https://api.bitbucket.org/2.0/repositories/cristofoleti_renato/dka-desktop/downloads" --user "${AUTH_USER}:${AUTH_PASS}" -F files=@version.json || true
+                elif [ -n "$BITBUCKET_STEP_OAUTH_TOKEN" ]; then
+                  curl -s -X POST "https://api.bitbucket.org/2.0/repositories/cristofoleti_renato/dka-desktop/downloads" -H "Authorization: Bearer ${BITBUCKET_STEP_OAUTH_TOKEN}" -F files=@dist/DKA_Alinhamento-Linux-x64.tar.gz || true
+                  curl -s -X POST "https://api.bitbucket.org/2.0/repositories/cristofoleti_renato/dka-desktop/downloads" -H "Authorization: Bearer ${BITBUCKET_STEP_OAUTH_TOKEN}" -F files=@version.json || true
+                else
+                  curl -s -X POST "https://api.bitbucket.org/2.0/repositories/cristofoleti_renato/dka-desktop/downloads" -F files=@dist/DKA_Alinhamento-Linux-x64.tar.gz || true
+                  curl -s -X POST "https://api.bitbucket.org/2.0/repositories/cristofoleti_renato/dka-desktop/downloads" -F files=@version.json || true
+                fi
             artifacts:
               - dist/DKA_Alinhamento-Linux-x64.tar.gz
 
         - step:
-            name: Build Windows (.exe via Wine)
+            name: Build & Deploy Windows (.exe)
             image: cdrx/pyinstaller-windows:python3
             script:
               - pip install -r requirements.txt
               - pip install --upgrade pyinstaller
               - pyinstaller --noconfirm DKA_Alinhamento.spec
               - mv dist/windows/DKA_Alinhamento.exe dist/DKA_Alinhamento-Windows-x64.exe || mv dist/DKA_Alinhamento.exe dist/DKA_Alinhamento-Windows-x64.exe || true
+              # Envia o executável Windows para o repositório público dka-desktop
+              - |
+                AUTH_USER="${BITBUCKET_USERNAME:-AntonioDiogenes}"
+                AUTH_PASS="${BITBUCKET_APP_PASSWORD}"
+                if [ -n "$AUTH_PASS" ]; then
+                  curl -s -X POST "https://api.bitbucket.org/2.0/repositories/cristofoleti_renato/dka-desktop/downloads" --user "${AUTH_USER}:${AUTH_PASS}" -F files=@dist/DKA_Alinhamento-Windows-x64.exe || true
+                elif [ -n "$BITBUCKET_STEP_OAUTH_TOKEN" ]; then
+                  curl -s -X POST "https://api.bitbucket.org/2.0/repositories/cristofoleti_renato/dka-desktop/downloads" -H "Authorization: Bearer ${BITBUCKET_STEP_OAUTH_TOKEN}" -F files=@dist/DKA_Alinhamento-Windows-x64.exe || true
+                else
+                  curl -s -X POST "https://api.bitbucket.org/2.0/repositories/cristofoleti_renato/dka-desktop/downloads" -F files=@dist/DKA_Alinhamento-Windows-x64.exe || true
+                fi
             artifacts:
               - dist/**
 
@@ -36,36 +65,7 @@ pipelines:
     main:
       - parallel:
           - step:
-              name: Build Linux (x86_64)
-              caches:
-                - pip
-              script:
-                - apt-get update && apt-get install -y python3-tk libtk8.6 libsqlite3-dev
-                - python -m pip install --upgrade pip
-                - pip install -r requirements.txt pyinstaller
-                - python -m unittest discover tests
-                - pyinstaller --noconfirm DKA_Alinhamento.spec
-                - chmod +x dist/DKA_Alinhamento
-                - tar -czf dist/DKA_Alinhamento-Linux-x64.tar.gz -C dist DKA_Alinhamento
-              artifacts:
-                - dist/DKA_Alinhamento-Linux-x64.tar.gz
-
-          - step:
-              name: Build Windows (.exe via Wine)
-              image: cdrx/pyinstaller-windows:python3
-              script:
-                - pip install -r requirements.txt
-                - pip install --upgrade pyinstaller
-                - pyinstaller --noconfirm DKA_Alinhamento.spec
-                - mv dist/windows/DKA_Alinhamento.exe dist/DKA_Alinhamento-Windows-x64.exe || mv dist/DKA_Alinhamento.exe dist/DKA_Alinhamento-Windows-x64.exe || true
-              artifacts:
-                - dist/**
-
-  tags:
-    'v*':
-      - parallel:
-          - step:
-              name: Release Build Linux
+              name: Build & Deploy Linux (x86_64)
               caches:
                 - pip
               script:
@@ -77,16 +77,23 @@ pipelines:
                 - chmod +x dist/DKA_Alinhamento
                 - tar -czf dist/DKA_Alinhamento-Linux-x64.tar.gz -C dist DKA_Alinhamento
                 - |
-                  if [ -n "$BITBUCKET_APP_PASSWORD" ]; then
-                    curl -s -X POST "https://api.bitbucket.org/2.0/repositories/cristofoleti_renato/dka-desktop/downloads" \
-                      --user "${BITBUCKET_USERNAME}:${BITBUCKET_APP_PASSWORD}" \
-                      -F files=@dist/DKA_Alinhamento-Linux-x64.tar.gz
+                  AUTH_USER="${BITBUCKET_USERNAME:-AntonioDiogenes}"
+                  AUTH_PASS="${BITBUCKET_APP_PASSWORD}"
+                  if [ -n "$AUTH_PASS" ]; then
+                    curl -s -X POST "https://api.bitbucket.org/2.0/repositories/cristofoleti_renato/dka-desktop/downloads" --user "${AUTH_USER}:${AUTH_PASS}" -F files=@dist/DKA_Alinhamento-Linux-x64.tar.gz || true
+                    curl -s -X POST "https://api.bitbucket.org/2.0/repositories/cristofoleti_renato/dka-desktop/downloads" --user "${AUTH_USER}:${AUTH_PASS}" -F files=@version.json || true
+                  elif [ -n "$BITBUCKET_STEP_OAUTH_TOKEN" ]; then
+                    curl -s -X POST "https://api.bitbucket.org/2.0/repositories/cristofoleti_renato/dka-desktop/downloads" -H "Authorization: Bearer ${BITBUCKET_STEP_OAUTH_TOKEN}" -F files=@dist/DKA_Alinhamento-Linux-x64.tar.gz || true
+                    curl -s -X POST "https://api.bitbucket.org/2.0/repositories/cristofoleti_renato/dka-desktop/downloads" -H "Authorization: Bearer ${BITBUCKET_STEP_OAUTH_TOKEN}" -F files=@version.json || true
+                  else
+                    curl -s -X POST "https://api.bitbucket.org/2.0/repositories/cristofoleti_renato/dka-desktop/downloads" -F files=@dist/DKA_Alinhamento-Linux-x64.tar.gz || true
+                    curl -s -X POST "https://api.bitbucket.org/2.0/repositories/cristofoleti_renato/dka-desktop/downloads" -F files=@version.json || true
                   fi
               artifacts:
                 - dist/DKA_Alinhamento-Linux-x64.tar.gz
 
           - step:
-              name: Release Build Windows (.exe)
+              name: Build & Deploy Windows (.exe)
               image: cdrx/pyinstaller-windows:python3
               script:
                 - pip install -r requirements.txt
@@ -94,10 +101,14 @@ pipelines:
                 - pyinstaller --noconfirm DKA_Alinhamento.spec
                 - mv dist/windows/DKA_Alinhamento.exe dist/DKA_Alinhamento-Windows-x64.exe || mv dist/DKA_Alinhamento.exe dist/DKA_Alinhamento-Windows-x64.exe || true
                 - |
-                  if [ -n "$BITBUCKET_APP_PASSWORD" ]; then
-                    curl -s -X POST "https://api.bitbucket.org/2.0/repositories/cristofoleti_renato/dka-desktop/downloads" \
-                      --user "${BITBUCKET_USERNAME}:${BITBUCKET_APP_PASSWORD}" \
-                      -F files=@dist/DKA_Alinhamento-Windows-x64.exe
+                  AUTH_USER="${BITBUCKET_USERNAME:-AntonioDiogenes}"
+                  AUTH_PASS="${BITBUCKET_APP_PASSWORD}"
+                  if [ -n "$AUTH_PASS" ]; then
+                    curl -s -X POST "https://api.bitbucket.org/2.0/repositories/cristofoleti_renato/dka-desktop/downloads" --user "${AUTH_USER}:${AUTH_PASS}" -F files=@dist/DKA_Alinhamento-Windows-x64.exe || true
+                  elif [ -n "$BITBUCKET_STEP_OAUTH_TOKEN" ]; then
+                    curl -s -X POST "https://api.bitbucket.org/2.0/repositories/cristofoleti_renato/dka-desktop/downloads" -H "Authorization: Bearer ${BITBUCKET_STEP_OAUTH_TOKEN}" -F files=@dist/DKA_Alinhamento-Windows-x64.exe || true
+                  else
+                    curl -s -X POST "https://api.bitbucket.org/2.0/repositories/cristofoleti_renato/dka-desktop/downloads" -F files=@dist/DKA_Alinhamento-Windows-x64.exe || true
                   fi
               artifacts:
                 - dist/**
