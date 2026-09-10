@@ -26,6 +26,7 @@ pipelines:
             image: cdrx/pyinstaller-windows:python3
             script:
               - pip install -r requirements.txt
+              - pip install --upgrade pyinstaller
               - pyinstaller --noconfirm DKA_Alinhamento.spec
               - mv dist/windows/DKA_Alinhamento.exe dist/DKA_Alinhamento-Windows-x64.exe || mv dist/DKA_Alinhamento.exe dist/DKA_Alinhamento-Windows-x64.exe || true
             artifacts:
@@ -54,6 +55,7 @@ pipelines:
               image: cdrx/pyinstaller-windows:python3
               script:
                 - pip install -r requirements.txt
+                - pip install --upgrade pyinstaller
                 - pyinstaller --noconfirm DKA_Alinhamento.spec
                 - mv dist/windows/DKA_Alinhamento.exe dist/DKA_Alinhamento-Windows-x64.exe || mv dist/DKA_Alinhamento.exe dist/DKA_Alinhamento-Windows-x64.exe || true
               artifacts:
@@ -88,6 +90,7 @@ pipelines:
               image: cdrx/pyinstaller-windows:python3
               script:
                 - pip install -r requirements.txt
+                - pip install --upgrade pyinstaller
                 - pyinstaller --noconfirm DKA_Alinhamento.spec
                 - mv dist/windows/DKA_Alinhamento.exe dist/DKA_Alinhamento-Windows-x64.exe || mv dist/DKA_Alinhamento.exe dist/DKA_Alinhamento-Windows-x64.exe || true
                 - |
