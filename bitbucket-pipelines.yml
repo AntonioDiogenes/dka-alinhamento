@@ -30,7 +30,7 @@ pipelines:
               - pyinstaller --noconfirm DKA_Alinhamento.spec
               - mv dist/windows/DKA_Alinhamento.exe dist/DKA_Alinhamento-Windows-x64.exe || mv dist/DKA_Alinhamento.exe dist/DKA_Alinhamento-Windows-x64.exe || true
             artifacts:
-              - dist/DKA_Alinhamento-Windows-x64.exe
+              - dist/**
 
   branches:
     main:
@@ -59,7 +59,7 @@ pipelines:
                 - pyinstaller --noconfirm DKA_Alinhamento.spec
                 - mv dist/windows/DKA_Alinhamento.exe dist/DKA_Alinhamento-Windows-x64.exe || mv dist/DKA_Alinhamento.exe dist/DKA_Alinhamento-Windows-x64.exe || true
               artifacts:
-                - dist/DKA_Alinhamento-Windows-x64.exe
+                - dist/**
 
   tags:
     'v*':
@@ -100,4 +100,4 @@ pipelines:
                       -F files=@dist/DKA_Alinhamento-Windows-x64.exe
                   fi
               artifacts:
-                - dist/DKA_Alinhamento-Windows-x64.exe
+                - dist/**
