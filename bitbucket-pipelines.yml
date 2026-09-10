@@ -1,0 +1,62 @@
+# Bitbucket Pipelines - DKA Alinhamento
+# Executa testes unitários e gera artefatos de build para Linux e Windows
+
+image: python:3.11
+
+pipelines:
+  default:
+    - step:
+        name: Testes Automatizados e Build (Linux Executável)
+        caches:
+          - pip
+        script:
+          - apt-get update && apt-get install -y python3-tk libtk8.6 libsqlite3-dev
+          - python -m pip install --upgrade pip
+          - pip install -r requirements.txt pyinstaller
+          - python -m unittest discover tests
+          - pyinstaller --noconfirm DKA_Alinhamento.spec
+          - chmod +x dist/DKA_Alinhamento
+          - tar -czf dist/DKA_Alinhamento-Linux-x64.tar.gz -C dist DKA_Alinhamento
+        artifacts:
+          - dist/**
+
+  branches:
+    main:
+      - step:
+          name: Testes e Compilação Principal (Main)
+          caches:
+            - pip
+          script:
+            - apt-get update && apt-get install -y python3-tk libtk8.6 libsqlite3-dev
+            - python -m pip install --upgrade pip
+            - pip install -r requirements.txt pyinstaller
+            - python -m unittest discover tests
+            - pyinstaller --noconfirm DKA_Alinhamento.spec
+            - chmod +x dist/DKA_Alinhamento
+            - tar -czf dist/DKA_Alinhamento-Linux-x64.tar.gz -C dist DKA_Alinhamento
+          artifacts:
+            - dist/**
+
+  tags:
+    'v*':
+      - step:
+          name: Build de Release e Publicação nos Downloads
+          caches:
+            - pip
+          script:
+            - apt-get update && apt-get install -y python3-tk libtk8.6 libsqlite3-dev
+            - python -m pip install --upgrade pip
+            - pip install -r requirements.txt pyinstaller
+            - python -m unittest discover tests
+            - pyinstaller --noconfirm DKA_Alinhamento.spec
+            - chmod +x dist/DKA_Alinhamento
+            - tar -czf dist/DKA_Alinhamento-Linux-x64.tar.gz -C dist DKA_Alinhamento
+            # Se credenciais BITBUCKET_USERNAME e BITBUCKET_APP_PASSWORD estiverem configuradas na conta Bitbucket:
+            - |
+              if [ -n "$BITBUCKET_APP_PASSWORD" ]; then
+                curl -s -X POST "https://api.bitbucket.org/2.0/repositories/${BITBUCKET_REPO_OWNER}/${BITBUCKET_REPO_SLUG}/downloads" \
+                  --user "${BITBUCKET_USERNAME}:${BITBUCKET_APP_PASSWORD}" \
+                  -F files=@dist/DKA_Alinhamento-Linux-x64.tar.gz
+              fi
+          artifacts:
+            - dist/**

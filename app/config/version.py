@@ -5,4 +5,4 @@ CURRENT_VERSION = "1.1.5"
 APP_NAME = "DKA Alinhamento"
 
 # URL de checagem do manifesto de versão mais recente
-VERSION_CHECK_URL = "https://raw.githubusercontent.com/AntonioDiogenes/dka-alinhamento/main/version.json"
+VERSION_CHECK_URL = "https://bitbucket.org/cristofoleti_renato/dka-tkinter/raw/main/version.json"
