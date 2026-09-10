@@ -136,5 +136,39 @@ class TestDatabaseSecurityAndPersistence(unittest.TestCase):
         self.assertIsNotNone(persisted, "O registro deve persistir após reabrir a conexão.")
         self.assertEqual(persisted["nome"], "Cliente Persistente S/A")
 
+    def test_6_criacao_cliente_data_atual(self):
+        """Teste 6: Verifica se o campo date_service é salvo com a data atual dinâmica DD/MM/YYYY."""
+        from datetime import datetime
+        data_hoje = datetime.now().strftime("%d/%m/%Y")
+        
+        client_data = {
+            "nome": "Cliente Data Dinamica Ltda",
+            "cpf_cnpj": "12.345.678/0001-99",
+            "cidade": "Ribeirão Preto",
+            "uf": "SP"
+        }
+        created = ClientService.save_client(client_data)
+        self.assertEqual(created["date_service"], data_hoje, f"date_service deve ser {data_hoje}")
+
+    def test_7_cadastro_rapido_cliente(self):
+        """Teste 7: Verifica se o cadastro rápido no atendimento grava corretamente e permite busca por CPF/CNPJ."""
+        quick_client_data = {
+            "nome": "Transportadora Rapida Eireli",
+            "cpf_cnpj": "55.444.333/0001-22",
+            "celular": "(11) 97777-8888",
+            "cidade": "Santos",
+            "uf": "SP",
+            "email": ""
+        }
+        created = ClientService.save_client(quick_client_data)
+        self.assertIsNotNone(created.get("id"))
+        self.assertEqual(created["nome"], "Transportadora Rapida Eireli")
+        self.assertEqual(created["cpf_cnpj"], "55.444.333/0001-22")
+
+        # Testar filtro por CPF/CNPJ
+        found_by_doc = ClientService.filter_clients(cpf_cnpj_filter="55.444.333/0001-22")
+        self.assertGreater(len(found_by_doc), 0)
+        self.assertEqual(found_by_doc[0]["id"], created["id"])
+
 if __name__ == "__main__":
     unittest.main()

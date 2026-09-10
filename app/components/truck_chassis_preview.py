@@ -151,36 +151,58 @@ class TruckChassisPreview(tk.Frame):
 
             axle_y = tank_y + tank_h + 36
 
-            # 4. SEÇÃO 3: EIXOS TRASEIROS (Tração / Rodados Duplos)
-            for r in range(rear_axles):
-                # Rodado Duplo Esquerdo (Duas rodas grudadas)
-                self.canvas.create_rectangle(
-                    rail_left - 52, axle_y - 27, rail_left - 32, axle_y + 27,
-                    fill="#a3a3a3", outline="#d4d4d4", width=1.5
-                )
-                self.canvas.create_rectangle(
-                    rail_left - 30, axle_y - 27, rail_left - 10, axle_y + 27,
-                    fill="#a3a3a3", outline="#d4d4d4", width=1.5
-                )
-                self.canvas.create_rectangle(
-                    rail_left - 10, axle_y - 8, rail_left, axle_y + 8,
-                    fill="#404040", outline=""
-                )
+            is_car = unit_type in ["Veículo Passeio / Leve", "Carro", "Utilitário", "Passeio"]
 
-                # Conector de Eixo Direito
-                self.canvas.create_rectangle(
-                    rail_right, axle_y - 8, rail_right + 10, axle_y + 8,
-                    fill="#404040", outline=""
-                )
-                # Rodado Duplo Direito (Roda interna + Roda externa)
-                self.canvas.create_rectangle(
-                    rail_right + 10, axle_y - 27, rail_right + 30, axle_y + 27,
-                    fill="#a3a3a3", outline="#d4d4d4", width=1.5
-                )
-                self.canvas.create_rectangle(
-                    rail_right + 32, axle_y - 27, rail_right + 52, axle_y + 27,
-                    fill="#a3a3a3", outline="#d4d4d4", width=1.5
-                )
+            # 4. SEÇÃO 3: EIXOS TRASEIROS (Tração / Rodados Duplos para Caminhões, Simples para Leves)
+            for r in range(rear_axles):
+                if is_car:
+                    # Roda Simples Esquerda (Leve)
+                    self.canvas.create_rectangle(
+                        rail_left - 36, axle_y - 27, rail_left - 14, axle_y + 27,
+                        fill="#a3a3a3", outline="#d4d4d4", width=1.5
+                    )
+                    self.canvas.create_rectangle(
+                        rail_left - 14, axle_y - 6, rail_left, axle_y + 6,
+                        fill="#404040", outline=""
+                    )
+                    # Roda Simples Direita (Leve)
+                    self.canvas.create_rectangle(
+                        rail_right, axle_y - 6, rail_right + 14, axle_y + 6,
+                        fill="#404040", outline=""
+                    )
+                    self.canvas.create_rectangle(
+                        rail_right + 14, axle_y - 27, rail_right + 36, axle_y + 27,
+                        fill="#a3a3a3", outline="#d4d4d4", width=1.5
+                    )
+                else:
+                    # Rodado Duplo Esquerdo (Duas rodas grudadas - Caminhões)
+                    self.canvas.create_rectangle(
+                        rail_left - 52, axle_y - 27, rail_left - 32, axle_y + 27,
+                        fill="#a3a3a3", outline="#d4d4d4", width=1.5
+                    )
+                    self.canvas.create_rectangle(
+                        rail_left - 30, axle_y - 27, rail_left - 10, axle_y + 27,
+                        fill="#a3a3a3", outline="#d4d4d4", width=1.5
+                    )
+                    self.canvas.create_rectangle(
+                        rail_left - 10, axle_y - 8, rail_left, axle_y + 8,
+                        fill="#404040", outline=""
+                    )
+
+                    # Conector de Eixo Direito
+                    self.canvas.create_rectangle(
+                        rail_right, axle_y - 8, rail_right + 10, axle_y + 8,
+                        fill="#404040", outline=""
+                    )
+                    # Rodado Duplo Direito (Roda interna + Roda externa)
+                    self.canvas.create_rectangle(
+                        rail_right + 10, axle_y - 27, rail_right + 30, axle_y + 27,
+                        fill="#a3a3a3", outline="#d4d4d4", width=1.5
+                    )
+                    self.canvas.create_rectangle(
+                        rail_right + 32, axle_y - 27, rail_right + 52, axle_y + 27,
+                        fill="#a3a3a3", outline="#d4d4d4", width=1.5
+                    )
 
                 axle_y += 64
 

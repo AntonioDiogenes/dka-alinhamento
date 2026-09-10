@@ -13,14 +13,15 @@ from app.components.alignment_header import AlignmentHeader
 from app.components.truck_chassis_preview import TruckChassisPreview
 from app.utils.icons import create_icon_image
 from app.utils.scroll_helper import setup_canvas_scrolling
+from app.utils.vehicle_helper import classify_vehicle_type
 
 UNIT_TYPES = [
-    "Cavalo Mecânico", "Caminhão Rígido", "Semirreboque", "Reboque", "Dolly", "Implemento"
+    "Cavalo Mecânico", "Caminhão Rígido", "Veículo Passeio / Leve", "Semirreboque", "Reboque", "Dolly", "Implemento"
 ]
 
 CATALOG_OPTIONS = [
     "Volvo FH 540 Globetrotter", "Scania R450 6x2", "Mercedes-Benz Actros 2651",
-    "DAF XF 530 6x4", "MAN TGX 28.440", "Iveco Hi-Way 600S44T", "Universal"
+    "DAF XF 530 6x4", "MAN TGX 28.440", "Iveco Hi-Way 600S44T", "Toyota Corolla", "Fiat Uno Mille", "Universal"
 ]
 
 class TrucksSetupView(tk.Frame):
@@ -33,18 +34,25 @@ class TrucksSetupView(tk.Frame):
         truck_info = self.kwargs.get("truck_data") or self.kwargs.get("truck") or {}
 
         if truck_info:
-            brand = truck_info.get("brand_name", "")
-            model = truck_info.get("model_name", "Caminhão")
+            brand = str(truck_info.get("brand_name", ""))
+            model = str(truck_info.get("model_name", "Caminhão"))
             catalog_title = f"{brand} {model}".strip()
             category = str(truck_info.get("category", "")).upper()
             total_axles = int(truck_info.get("axles_count", 3))
 
-            is_rigid = any(k in category or k in model.upper() for k in ["RIGID", "RÍGIDO", "RIGIDO", "TOCO", "3/4", "CHASSI"])
-            unit1_type = "Caminhão Rígido" if is_rigid else "Cavalo Mecânico"
-            front = 2 if "BIDIRECIONAL" in category or "8X" in category else 1
-            rear = max(1, total_axles - front)
+            # Detecção inteligente via classify_vehicle_type (supera dados brutos do DB com category='TRUCK')
+            unit1_type = classify_vehicle_type(brand, model, category)
 
-            # Carrega SEMPRE apenas a 1ª unidade selecionada (sem reboque padrão)
+            if unit1_type == "Veículo Passeio / Leve":
+                front = 1
+                rear = 1
+            elif unit1_type == "Caminhão Rígido":
+                front = 2 if "BIDIRECIONAL" in category or "8X" in category else 1
+                rear = max(1, total_axles - front)
+            else:
+                front = 2 if "BIDIRECIONAL" in category or "8X" in category else 1
+                rear = max(1, total_axles - front)
+
             self.units_data: List[Dict[str, Any]] = [
                 {
                     "id": 1,

@@ -127,6 +127,10 @@ class DashboardView(tk.Frame):
             label="🚛  Gerenciar Modelos de Veículos",
             command=lambda: self.router.navigate("configuracoes.modelos")
         )
+        menu.add_command(
+            label="👨‍🔧  Gerenciar Mecânicos / Técnicos",
+            command=lambda: self.router.navigate("configuracoes.mecanicos")
+        )
         menu.add_separator()
         menu.add_command(
             label="🖼️  Alterar Imagem de Fundo",

@@ -10,7 +10,16 @@ from app.models.base import Base
 from app.models.client import ClientModel
 from app.models.attendance import AttendanceModel
 from app.models.truck import TruckModel
+from app.models.mechanic import MechanicModel
 from app.database.connection import get_engine, get_session, validate_connection
+
+# Dados iniciais para seeding na primeira execução
+SEED_MECHANICS = [
+    {"nome": "Carlos Eduardo", "especialidade": "Mecânico Chefe", "celular": "(11) 98111-2233", "ativo": True, "date_created": "15/08/2026"},
+    {"nome": "João Pedro", "especialidade": "Técnico Alinhador", "celular": "(11) 98222-3344", "ativo": True, "date_created": "15/08/2026"},
+    {"nome": "Roberto Silva", "especialidade": "Especialista em Geometria", "celular": "(11) 98333-4455", "ativo": True, "date_created": "16/08/2026"},
+    {"nome": "Marcos Antonio", "especialidade": "Técnico de Suspensão", "celular": "(11) 98444-5566", "ativo": True, "date_created": "17/08/2026"}
+]
 
 # Dados iniciais para seeding na primeira execução
 SEED_CLIENTS = [
@@ -164,6 +173,11 @@ def run_migrations():
 
     session = get_session()
     try:
+        # Seeder de Mecânicos
+        if session.query(MechanicModel).count() == 0:
+            for m_data in SEED_MECHANICS:
+                session.add(MechanicModel(**m_data))
+
         # Seeder de Clientes
         if session.query(ClientModel).count() == 0:
             for c_data in SEED_CLIENTS:

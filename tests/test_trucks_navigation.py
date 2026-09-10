@@ -8,6 +8,13 @@ class TestTrucksNavigation(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         try:
+            from app.database.connection import init_engine
+            from app.database.migrations import run_migrations
+            init_engine()
+            run_migrations()
+        except Exception:
+            pass
+        try:
             cls.root = tk.Tk()
             cls.root.withdraw()
         except Exception:

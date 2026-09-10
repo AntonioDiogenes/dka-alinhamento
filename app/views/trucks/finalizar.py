@@ -11,6 +11,7 @@ from typing import List, Dict, Any, Optional
 
 from app.config.settings import COLORS
 from app.services.client_service import ClientService
+from app.services.mechanic_service import MechanicService
 from app.components.alignment_header import AlignmentHeader
 from app.utils.icons import create_icon_image
 from app.utils.scroll_helper import setup_canvas_scrolling
@@ -46,7 +47,39 @@ class QuickClientDialog(tk.Toplevel):
         self.var_cidade = tk.StringVar()
         self.var_uf = tk.StringVar(value="SP")
 
+        self.var_cpf.trace_add("write", self._mask_cpf_cnpj)
+        self.var_cel.trace_add("write", self._mask_celular)
+
         self._build_ui()
+
+    def _mask_cpf_cnpj(self, *args):
+        raw = "".join(filter(str.isdigit, self.var_cpf.get()))[:14]
+        if len(raw) <= 11:
+            formatted = raw
+            if len(raw) > 3:
+                formatted = raw[:3] + "." + raw[3:]
+            if len(raw) > 6:
+                formatted = formatted[:7] + "." + raw[6:]
+            if len(raw) > 9:
+                formatted = formatted[:11] + "-" + raw[9:]
+        else:
+            formatted = raw[:2] + "." + raw[2:5] + "." + raw[5:8] + "/" + raw[8:12] + "-" + raw[12:]
+
+        if self.var_cpf.get() != formatted:
+            self.var_cpf.set(formatted)
+
+    def _mask_celular(self, *args):
+        raw = "".join(filter(str.isdigit, self.var_cel.get()))[:11]
+        formatted = raw
+        if len(raw) > 0:
+            formatted = "(" + raw
+        if len(raw) > 2:
+            formatted = "(" + raw[:2] + ") " + raw[2:]
+        if len(raw) > 7:
+            formatted = "(" + raw[:2] + ") " + raw[2:7] + "-" + raw[7:]
+
+        if self.var_cel.get() != formatted:
+            self.var_cel.set(formatted)
 
     def _build_ui(self):
         container = tk.Frame(self, bg="#272f43", padx=24, pady=24)
@@ -107,8 +140,10 @@ class QuickClientDialog(tk.Toplevel):
             "celular": self.var_cel.get().strip(),
             "cidade": self.var_cidade.get().strip() or "São Paulo",
             "uf": self.var_uf.get(),
-            "email": "contato@cliente.com"
+            "email": ""
         })
+        self.on_save(new_client)
+        self.destroy()
         self.on_save(new_client)
         self.destroy()
 
@@ -143,8 +178,14 @@ class TrucksFinalizarView(tk.Frame):
         # Busca de Cliente
         self.var_client_search = tk.StringVar()
 
-        # Dados do Serviço
-        self.var_tecnico = tk.StringVar(value=TECNICOS_LISTA[0])
+        # Dados do Serviço (Mecânicos/Técnicos Ativos)
+        active_mecs = MechanicService.get_active_mechanics()
+        if active_mecs:
+            self.tecnicos_lista = [f"{m['nome']} - {m['especialidade']}" for m in active_mecs]
+        else:
+            self.tecnicos_lista = TECNICOS_LISTA
+
+        self.var_tecnico = tk.StringVar(value=self.tecnicos_lista[0])
 
         # Ícones
         self.img_truck = create_icon_image("truck", size=18, color="#60a5fa")
@@ -250,7 +291,7 @@ class TrucksFinalizarView(tk.Frame):
         f_tec = tk.Frame(card3, bg="#272f43")
         f_tec.pack(fill="x", pady=(0, 12))
         tk.Label(f_tec, text="Técnico Responsável pelo Alinhamento *", font=("Segoe UI", 9, "bold"), fg="#d1d5db", bg="#272f43").pack(anchor="w", pady=(0, 4))
-        om_tec = tk.OptionMenu(f_tec, self.var_tecnico, *TECNICOS_LISTA)
+        om_tec = tk.OptionMenu(f_tec, self.var_tecnico, *self.tecnicos_lista)
         om_tec.config(bg="#0d1117", fg="white", activebackground="#2563eb", bd=1, highlightbackground="#2a3245", font=("Segoe UI", 10))
         om_tec["menu"].config(bg="#1c2230", fg="white")
         om_tec.pack(fill="x")
@@ -336,7 +377,8 @@ class TrucksFinalizarView(tk.Frame):
             )
             btn_change.pack(side="right")
 
-            sub_info = f"CPF/CNPJ: {c['cpf_cnpj']}   •   Celular: {c.get('celular', '(11) 98765-4321')}   •   {c.get('cidade', 'São Paulo')} - {c.get('uf', 'SP')}"
+            celular_str = c.get('celular') or 'Não informado'
+            sub_info = f"CPF/CNPJ: {c['cpf_cnpj']}   •   Celular: {celular_str}   •   {c.get('cidade', 'São Paulo')} - {c.get('uf', 'SP')}"
             lbl_sub = tk.Label(card_c, text=sub_info, font=("Segoe UI", 9), fg="#9ca3af", bg="#1c2230")
             lbl_sub.pack(anchor="w", pady=(6, 0))
 
@@ -385,6 +427,8 @@ class TrucksFinalizarView(tk.Frame):
     def _do_search_client(self):
         query = self.var_client_search.get().strip()
         results = ClientService.filter_clients(nome_filter=query)
+        if not results and query:
+            results = ClientService.filter_clients(cpf_cnpj_filter=query)
         if results:
             self.selected_client = results[0]
             self._render_client_state()

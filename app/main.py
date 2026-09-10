@@ -35,6 +35,7 @@ from app.views.trucks.preview import TrucksPreviewView
 from app.views.attendances.index import AttendancesIndexView
 from app.views.configuracoes.marcas import MarcasView
 from app.views.configuracoes.modelos import ModelosView
+from app.views.configuracoes.mecanicos import MecanicosView
 
 def main():
     # Inicialização da camada de persistência e segurança (SQLCipher)
@@ -97,11 +98,15 @@ def main():
     router.register("trucks.preview", lambda parent, r, kwargs: TrucksPreviewView(parent, r, kwargs))
     router.register("attendances", lambda parent, r, kwargs: AttendancesIndexView(parent, r, kwargs))
 
-    # Rotas do Módulo de Configurações (Marcas e Modelos)
+    # Rotas do Módulo de Configurações (Marcas, Modelos e Mecânicos)
     router.register("configuracoes.marcas", lambda parent, r, kwargs: MarcasView(parent, r, kwargs))
     router.register("configuracoes.modelos", lambda parent, r, kwargs: ModelosView(parent, r, kwargs))
+    router.register("configuracoes.mecanicos", lambda parent, r, kwargs: MecanicosView(parent, r, kwargs))
     router.register("settings.marcas", lambda parent, r, kwargs: MarcasView(parent, r, kwargs))
     router.register("settings.modelos", lambda parent, r, kwargs: ModelosView(parent, r, kwargs))
+    router.register("settings.mecanicos", lambda parent, r, kwargs: MecanicosView(parent, r, kwargs))
+    router.register("mecanicos", lambda parent, r, kwargs: MecanicosView(parent, r, kwargs))
+    router.register("mecanicos.index", lambda parent, r, kwargs: MecanicosView(parent, r, kwargs))
 
     # Rotas do Módulo de Clientes
     router.register("clientes.index", lambda parent, r, kwargs: ClientesIndexView(parent, r, kwargs))

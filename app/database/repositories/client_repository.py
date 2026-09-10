@@ -2,6 +2,7 @@
 Repositório de Clientes (database/repositories/client_repository.py).
 Encapsula todas as operações de banco de dados para a entidade Cliente.
 """
+from datetime import datetime
 from typing import List, Dict, Any, Optional
 from app.models.client import ClientModel
 from app.models.attendance import AttendanceModel
@@ -40,11 +41,13 @@ class ClientRepository:
             query = session.query(ClientModel)
 
             if nome_filter:
-                query = query.filter(ClientModel.nome.ilike(f"%{nome_filter.strip()}%"))
+                n_str = nome_filter.strip()
+                query = query.filter((ClientModel.nome.ilike(f"%{n_str}%")) | (ClientModel.name.ilike(f"%{n_str}%")))
 
             doc = doc_filter or kwargs.get("cpf_cnpj_filter", "")
             if doc:
-                query = query.filter(ClientModel.cpf_cnpj.ilike(f"%{doc.strip()}%"))
+                d_str = doc.strip()
+                query = query.filter((ClientModel.cpf_cnpj.ilike(f"%{d_str}%")) | (ClientModel.document.ilike(f"%{d_str}%")))
 
             if cidade_filter:
                 query = query.filter(ClientModel.cidade.ilike(f"%{cidade_filter.strip()}%"))
@@ -55,12 +58,12 @@ class ClientRepository:
                     AttendanceModel.plate.ilike(f"%{placa.strip()}%")
                 ).all()
                 matching_names = [a[0] for a in matching_atts if a[0]]
-                query = query.filter(ClientModel.nome.in_(matching_names))
+                query = query.filter((ClientModel.nome.in_(matching_names)) | (ClientModel.name.in_(matching_names)))
 
             if status_filter == "Ativos":
-                query = query.filter(ClientModel.ativo == True)
+                query = query.filter((ClientModel.ativo == True) | (ClientModel.is_active == True))
             elif status_filter == "Inativos":
-                query = query.filter(ClientModel.ativo == False)
+                query = query.filter((ClientModel.ativo == False) | (ClientModel.is_active == False))
 
             clients = query.order_by(ClientModel.id.desc()).all()
             return [c.to_dict() for c in clients]
@@ -71,9 +74,17 @@ class ClientRepository:
     def create(data: Dict[str, Any]) -> Dict[str, Any]:
         session = get_session()
         try:
+            date_val = data.get("date_service") or datetime.now().strftime("%d/%m/%Y")
+            nome_val = data.get("nome", "").strip()
+            doc_val = data.get("cpf_cnpj", "").strip()
+            ativo_val = data.get("ativo", True)
+
             new_client = ClientModel(
-                nome=data.get("nome", "").strip(),
-                cpf_cnpj=data.get("cpf_cnpj", "").strip(),
+                company_id=1,
+                name=nome_val,
+                document=doc_val,
+                nome=nome_val,
+                cpf_cnpj=doc_val,
                 email=data.get("email", "").strip(),
                 celular=data.get("celular", "").strip(),
                 telefone_fixo=data.get("telefone_fixo", "").strip(),
@@ -85,8 +96,9 @@ class ClientRepository:
                 cidade=data.get("cidade", "").strip(),
                 uf=data.get("uf", "SP").strip(),
                 observacoes=data.get("observacoes", "").strip(),
-                ativo=data.get("ativo", True),
-                date_service=data.get("date_service", "18/08/2026")
+                ativo=ativo_val,
+                is_active=ativo_val,
+                date_service=date_val
             )
             session.add(new_client)
             session.commit()
@@ -110,7 +122,14 @@ class ClientRepository:
                         "logradouro", "numero", "complemento", "bairro", "cidade",
                         "uf", "observacoes", "ativo", "date_service"]:
                 if key in data:
-                    setattr(client, key, data[key])
+                    val = data[key]
+                    setattr(client, key, val)
+                    if key == "nome":
+                        setattr(client, "name", val)
+                    elif key == "cpf_cnpj":
+                        setattr(client, "document", val)
+                    elif key == "ativo":
+                        setattr(client, "is_active", val)
 
             session.commit()
             session.refresh(client)
