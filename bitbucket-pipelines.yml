@@ -78,7 +78,7 @@ pipelines:
                 - tar -czf dist/DKA_Alinhamento-Linux-x64.tar.gz -C dist DKA_Alinhamento
                 - |
                   if [ -n "$BITBUCKET_APP_PASSWORD" ]; then
-                    curl -s -X POST "https://api.bitbucket.org/2.0/repositories/${BITBUCKET_REPO_OWNER}/${BITBUCKET_REPO_SLUG}/downloads" \
+                    curl -s -X POST "https://api.bitbucket.org/2.0/repositories/cristofoleti_renato/dka-desktop/downloads" \
                       --user "${BITBUCKET_USERNAME}:${BITBUCKET_APP_PASSWORD}" \
                       -F files=@dist/DKA_Alinhamento-Linux-x64.tar.gz
                   fi
@@ -95,7 +95,7 @@ pipelines:
                 - mv dist/windows/DKA_Alinhamento.exe dist/DKA_Alinhamento-Windows-x64.exe || mv dist/DKA_Alinhamento.exe dist/DKA_Alinhamento-Windows-x64.exe || true
                 - |
                   if [ -n "$BITBUCKET_APP_PASSWORD" ]; then
-                    curl -s -X POST "https://api.bitbucket.org/2.0/repositories/${BITBUCKET_REPO_OWNER}/${BITBUCKET_REPO_SLUG}/downloads" \
+                    curl -s -X POST "https://api.bitbucket.org/2.0/repositories/cristofoleti_renato/dka-desktop/downloads" \
                       --user "${BITBUCKET_USERNAME}:${BITBUCKET_APP_PASSWORD}" \
                       -F files=@dist/DKA_Alinhamento-Windows-x64.exe
                   fi
