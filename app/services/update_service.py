@@ -168,29 +168,30 @@ class UpdateService:
             print(f"[LicenseService] Validação offline (erro de rede): {license_network_error}")
 
         # ----------------------------------------------------------------
-        # 2. Checagem de atualizações (fluxo original)
+        # 2. Checagem de atualizações (DESATIVADO / COMENTADO)
         # ----------------------------------------------------------------
         latest_version = None
         download_url = ""
         release_notes = ""
         has_update = False
 
-        try:
-            req = urllib.request.Request(
-                VERSION_CHECK_URL,
-                headers={"User-Agent": f"{APP_NAME}-AutoUpdater"}
-            )
-            with _urlopen_with_ssl(req, timeout=5) as response:
-                if response.status == 200:
-                    data = json.loads(response.read().decode('utf-8'))
-                    latest_version = data.get("version", "").strip()
-
-                    if latest_version and self._is_newer_version(CURRENT_VERSION, latest_version):
-                        has_update = True
-                        download_url = self._get_platform_download_url(data)
-                        release_notes = data.get("release_notes", "Melhorias gerais e correções.")
-        except Exception:
-            pass
+        # Funcionalidade de verificação remota de atualizações desativada a pedido:
+        # try:
+        #     req = urllib.request.Request(
+        #         VERSION_CHECK_URL,
+        #         headers={"User-Agent": f"{APP_NAME}-AutoUpdater"}
+        #     )
+        #     with _urlopen_with_ssl(req, timeout=5) as response:
+        #         if response.status == 200:
+        #             data = json.loads(response.read().decode('utf-8'))
+        #             latest_version = data.get("version", "").strip()
+        #
+        #             if latest_version and self._is_newer_version(CURRENT_VERSION, latest_version):
+        #                 has_update = True
+        #                 download_url = self._get_platform_download_url(data)
+        #                 release_notes = data.get("release_notes", "Melhorias gerais e correções.")
+        # except Exception:
+        #     pass
 
         # Garante um tempo mínimo de exibição do splash (1.2 segundos) para ficar esteticamente agradável
         elapsed = time.time() - start_time
