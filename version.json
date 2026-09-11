@@ -1,7 +1,7 @@
 {
-  "version": "1.1.7",
-  "release_notes": "🚀 Versão 1.1.7:\n• Atualização do sistema de integração e distribuição de builds via Bitbucket.\n• Adicionado CRUD completo de Mecânicos nas Configurações.\n• Identificação e classificação automática de Veículos de Passeio / Leves (Fiat Uno, Corolla, etc.).\n• Correções gerais de estabilidade e fluxo de atendimento.",
-  "download_url_win": "https://bitbucket.org/cristofoleti_renato/dka-desktop/downloads/DKA_Alinhamento-Windows-x64.exe",
-  "download_url_linux": "https://bitbucket.org/cristofoleti_renato/dka-desktop/downloads/DKA_Alinhamento-Linux-x64.tar.gz",
-  "download_url_mac": "https://bitbucket.org/cristofoleti_renato/dka-desktop/downloads/DKA_Alinhamento-macOS.zip"
+  "version": "1.1.8",
+  "release_notes": "🚀 Versão 1.1.8:\n• Atualização de versão e migração da esteira de distribuição para o GitHub Actions.",
+  "download_url_win": "https://github.com/AntonioDiogenes/dka-alinhamento/releases/download/v1.1.8/DKA_Alinhamento-Windows-x64.exe",
+  "download_url_linux": "https://github.com/AntonioDiogenes/dka-alinhamento/releases/download/v1.1.8/DKA_Alinhamento-Linux-x64.tar.gz",
+  "download_url_mac": "https://github.com/AntonioDiogenes/dka-alinhamento/releases/download/v1.1.8/DKA_Alinhamento-macOS.zip"
 }
